@@ -52,12 +52,12 @@ CREATE TABLE pasajero(
     PRIMARY KEY(dni),
     
     FOREIGN KEY (dni) REFERENCES persona(dni) ON DELETE CASCADE,
-    FOREIGN KEY (acompanante) REFERENCES pasajero(dni) ON DELETE CASCADE --si se borra el acompa�ante tambi�n el pasajero
+    FOREIGN KEY (acompanante) REFERENCES pasajero(dni) ON DELETE CASCADE --si se borra el acompañante tambi�n el pasajero
 );
 
 CREATE TABLE contrato(
     id_contrato NUMBER NOT NULL CHECK (id_contrato > 0),
-    tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('INDEFINIDO', 'TEMPORAL', 'PR�CTICAS', 'FORMACI�N')),
+    tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('INDEFINIDO', 'TEMPORAL', 'PRACTICAS', 'FORMACION')),
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE,
     horas_semana NUMBER NOT NULL CHECK (horas_semana > 0),
@@ -97,6 +97,7 @@ CREATE TABLE conductor(
 CREATE TABLE empleado_estacion(
     dni VARCHAR(9) NOT NULL,
     abonos_vendidos NUMBER NOT NULL CHECK (abonos_vendidos >= 0),
+    billetes_vendidos NUMBER NOT NULL CHECK (billetes_vendidos >= 0),
     
     PRIMARY KEY (dni),
     FOREIGN KEY (dni) REFERENCES empleado(dni) ON DELETE CASCADE
