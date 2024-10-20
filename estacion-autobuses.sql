@@ -290,3 +290,140 @@ CREATE TABLE abono_familiar(
     FOREIGN KEY (familiar, empleado) REFERENCES familiar(dni, empleado) ON DELETE CASCADE
 );
 
+-- INSERTS
+
+-- tabla PERSONA
+INSERT INTO PERSONA(dni, nombre, apellidos, fecha_nacimiento ) VALUES('35225389S', 'Pepe', 'González', TO_DATE('10/02/1995','DD/MM/YYYY'));
+INSERT INTO PERSONA(dni, nombre, apellidos, fecha_nacimiento ) VALUES('59643874T', 'Lucas', 'Etxebarri', TO_DATE('23/05/2000','DD/MM/YYYY'));
+INSERT INTO PERSONA(dni, nombre, apellidos, fecha_nacimiento ) VALUES('25647312F', 'María', 'Gutiérrez', TO_DATE('02/12/2004','DD/MM/YYYY'));
+INSERT INTO PERSONA(dni, nombre, apellidos, fecha_nacimiento ) VALUES('35674242X', 'Carmen', 'Vázquez', TO_DATE('1980/01/30','YYYY/MM/DD'));
+INSERT INTO PERSONA(dni, nombre, apellidos, fecha_nacimiento ) VALUES('35749531Z', 'Daniela', 'González', TO_DATE('22/08/2022','DD/MM/YYYY'));
+INSERT INTO PERSONA(dni, nombre, apellidos, fecha_nacimiento ) VALUES('35674253N', 'Diego', 'Barja', TO_DATE('14/01/1998','DD/MM/YYYY'));
+INSERT INTO PERSONA(dni, nombre, apellidos, fecha_nacimiento ) VALUES('46813937H', 'Alba', 'Cid', TO_DATE('1976/10/05','YYYY/MM/DD'));
+INSERT INTO PERSONA(dni, nombre, apellidos, fecha_nacimiento ) VALUES('82082351Y', 'Alfredo', 'Díaz', TO_DATE('20/03/1970','DD/MM/YYYY'));
+INSERT INTO PERSONA(dni, nombre, apellidos, fecha_nacimiento ) VALUES('35537699R', 'Rosa', 'Prado', TO_DATE('24/04/1965','DD/MM/YYYY'));
+
+
+-- tabla PASAJERO
+INSERT INTO PASAJERO(dni) VALUES('35225389S');
+INSERT INTO PASAJERO(dni) VALUES('59643874T');
+INSERT INTO PASAJERO(dni) VALUES('25647312F');
+INSERT INTO PASAJERO(dni) VALUES('35674242X');
+INSERT INTO PASAJERO(dni, acompanante) VALUES('35749531Z');
+
+
+-- tabla TELEFONO
+INSERT INTO TELEFONO(dni, telefono) VALUES ('35225389S', '630335980');
+INSERT INTO TELEFONO(dni, telefono) VALUES ('35225389S', '973451258'); 
+INSERT INTO TELEFONO(dni, telefono) VALUES ('59643874T', '690221154');
+INSERT INTO TELEFONO(dni, telefono) VALUES ('25647312F', '651801206');
+INSERT INTO TELEFONO(dni, telefono) VALUES ('35674242X', '615458792');
+
+-- tabla CONTRATO
+INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('1', 'INDEFINIDO', TO_DATE('14/03/1992', 'DD/MM/YYYY'), NULL, '40', '1350');
+INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('2', 'TEMPORAL', TO_DATE('31/08/2024', 'DD/MM/YYYY'), TO_DATE('31/12/2024', 'DD/MM/YYYY'), '40', '1200');
+INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('3', 'PRACTICAS', TO_DATE('16/09/2024', 'DD/MM/YYYY'), TO_DATE('27/12/2024', 'DD/MM/YYYY'), '20', '400');
+INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('4', 'FORMACION', TO_DATE('14/09/2022', 'DD/MM/YYYY'), TO_DATE('24/05/2024', 'DD/MM/YYYY'), '20', '600');
+
+  
+-- tabla EMPLEADO
+INSERT INTO EMPLEADO (dni, contrato) VALUES ('35674253N', 1);
+INSERT INTO EMPLEADO (dni, contrato) VALUES ('46813937H', 2);
+INSERT INTO EMPLEADO (dni, contrato) VALUES ('82082351Y', 3);
+INSERT INTO EMPLEADO (dni, contrato) VALUES ('35537699R', 4);
+
+-- tabla CONDUCTOR
+
+INSERT INTO CONDUCTOR (dni, num_licencia) VALUES ('35674253N', '22301');
+INSERT INTO CONDUCTOR (dni, num_licencia) VALUES ('82082351Y', '22536');
+INSERT INTO CONDUCTOR (dni, num_licencia) VALUES ('35537699R', '22456');
+
+-- tabla ADMINISTRATIVO 
+
+INSERT INTO ADMINISTRATIVO (dni, abonos_vendidos) VALUES ('46813937H', '25');
+
+-- tabla EMPRESA
+
+INSERT INTO EMPRESA (cif, nombre, direccion, telefono) VALUES ('B2322468R', 'BUSDII', 'AVENIDA OTERO PEDRAYO', '926434765');
+INSERT INTO EMPRESA (cif, nombre, direccion, telefono) VALUES ('P2353389X', 'RUTADIRECTA', 'RÚA DO PROGRESO', '957875323');
+
+-- tabla AUTOBUS
+
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('5624 SQL', '30', 'Iveco Citelis', TO_DATE('21/08/2024', 'DD/MM/YYYY'), 'B2322468R', 'URBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('2024 BRR', '30', 'Iveco Citelis', TO_DATE('01/05/2024', 'DD/MM/YYYY'), 'B2322468R', 'URBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('8644 NMO', '45', 'Iveco Citelis Articulado', TO_DATE('28/04/2024', 'DD/MM/YYYY'), 'B2322468R', 'URBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('9191 SOL', '45', 'Iveco Citelis Articulado', TO_DATE('15/11/2023', 'DD/MM/YYYY'), 'B2322468R', 'URBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('2234 KFC', '60', 'Iveco Citelis', TO_DATE('30/09/2024', 'DD/MM/YYYY'), 'B2322468R', 'INTERURBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('6754 BDI', '75', 'Mercedes Benz O-405 G', TO_DATE('10/10/2024', 'DD/MM/YYYY'), 'P2353389X', 'INTERURBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('3223 BUS', '40', 'Mercedes Benz O-405 N2', TO_DATE('14/12/2023', 'DD/MM/YYYY'), 'P2353389X', 'URBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('3060 RTX', '40', 'Mercedes Benz O-405 N2', TO_DATE('24/12/2023', 'DD/MM/YYYY'), 'P2353389X', 'URBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('4455 USB', '40', 'Mercedes Benz O-405 N2', TO_DATE('14/10/2024', 'DD/MM/YYYY'), 'P2353389X', 'URBANO');
+
+-- tabla LINEA
+
+INSERT INTO LINEA (num_linea, descripcion) VALUES ('1', '');
+INSERT INTO LINEA (num_linea, descripcion) VALUES ('2', '');
+INSERT INTO LINEA (num_linea, descripcion) VALUES ('3', '');
+INSERT INTO LINEA (num_linea, descripcion) VALUES ('4', '');
+INSERT INTO LINEA (num_linea, descripcion) VALUES ('5', '');
+INSERT INTO LINEA (num_linea, descripcion) VALUES ('6', '');
+
+-- tabla AUTOBUS_URBANO
+
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('5624 SQL', '40', '1');
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('2024 BRR', '40', '3');
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('8644 NMO', '55', '2');
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('9191 SOL', '55', '4');
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('3223 BUS', '50', '1');
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('3060 RTX', '50', '5');
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('4455 USB', '50', '6');
+
+
+-- tabla PARADA
+
+INSERT INTO PARADA (cod_parada, direccion) VALUES ('1', 'RÚA CURROS ENRIQUEZ');
+INSERT INTO PARADA (cod_parada, direccion) VALUES ('2', 'AVENIDA DE MARIN');
+INSERT INTO PARADA (cod_parada, direccion) VALUES ('3', 'PARQUE DE SAN LAZARO');
+INSERT INTO PARADA (cod_parada, direccion) VALUES ('4', 'XARDIN DO POSIO');
+INSERT INTO PARADA (cod_parada, direccion) VALUES ('5', 'AVENIDA DE SANTIAGO');
+
+-- tabla LINEAS_PARADAS
+
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '2', '1');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '1', '2');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '3', '3');
+
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('2', '3', '1');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('2', '1', '2');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('2', '2', '3');
+
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('3', '1', '1');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('3', '2', '2');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('3', '5', '3');
+
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('4', '5', '1');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('4', '2', '2');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('4', '1', '3');
+
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('5', '3', '1');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('5', '1', '2');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('5', '4', '3');
+
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('6', '4', '1');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('6', '1', '2');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('6', '3', '3');
+
+-- tabla AUTOBUS_INTERURBANO
+
+INSERT INTO AUTOBUS_INTERURBANO (matricula, num_plazas) VALUES ('2234 KFC', '60');
+INSERT INTO AUTOBUS_INTERURBANO (matricula, num_plazas) VALUES ('6754 BDI', '75');
+
+-- tabla RUTA
+
+INSERT INTO RUTA (id_ruta, origen, destino, duracion) VALUES ('1', 'OURENSE', 'SANTIAGO', '120');
+INSERT INTO RUTA (id_ruta, origen, destino, duracion) VALUES ('2', 'OURENSE', 'VIGO', '90');
+
+-- tabla VIAJE
+
+INSERT INTO VIAJE (id_viaje, fecha, ruta, conductor, autbous) VALUES ();
+
