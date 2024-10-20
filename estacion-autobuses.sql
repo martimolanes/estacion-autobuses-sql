@@ -1,7 +1,12 @@
 SET AUTOCOMMIT on;
 SET SERVEROUTPUT on;
 
--- Sentencias de inicializacion
+-- drops vistas
+DROP VIEW vista_persona;
+DROP VIEW Pasajeros_menores;
+DROP VIEW vista_info_contrato;
+DROP VIEW vista_ab_normales_disponibles;
+-- drops tables
 DROP TABLE PERSONA CASCADE CONSTRAINTS;
 DROP TABLE TELEFONO CASCADE CONSTRAINTS;
 DROP TABLE PASAJERO CASCADE CONSTRAINTS;
@@ -20,8 +25,8 @@ DROP TABLE AUTOBUS_INTERURBANO CASCADE CONSTRAINTS;
 DROP TABLE RUTA CASCADE CONSTRAINTS;
 DROP TABLE VIAJE CASCADE CONSTRAINTS;
 DROP TABLE SERVICIO CASCADE CONSTRAINTS;
-DROP TABLE VENTA_BILLETE CASCADE CONSTRAINTS;
 DROP TABLE BILLETE CASCADE CONSTRAINTS;
+DROP TABLE VENTA_BILLETE CASCADE CONSTRAINTS;
 DROP TABLE BILLETE_COMBINADO CASCADE CONSTRAINTS;
 DROP TABLE ALQUILER_AUTOBUS CASCADE CONSTRAINTS;
 DROP TABLE ABONO CASCADE CONSTRAINTS;
@@ -81,12 +86,12 @@ CREATE TABLE EMPLEADO(
 );
 
 CREATE TABLE FAMILIAR(
-    dni VARCHAR(9) NOT NULL CHECK (REGEXP_LIKE (dni, '^[0-9]{8}[A-Z]$')),
+    dni VARCHAR(9) NOT NULL,
     empleado VARCHAR(9) NOT NULL,
-    --es subclase de persona o no?
     relacion VARCHAR(20) NOT NULL CHECK (LENGTH(relacion) > 0),
     
     PRIMARY KEY(dni, empleado),
+    FOREIGN KEY (dni) REFERENCES persona(dni) ON DELETE CASCADE,
     FOREIGN KEY (empleado) REFERENCES empleado(dni) ON DELETE CASCADE
 );
 
@@ -339,6 +344,7 @@ SELECT e.dni,
 FROM EMPLEADO e JOIN CONTRATO c ON e.CONTRATO = c.ID_CONTRATO JOIN PERSONA p ON e.dni= p.dni;
 
 /*Vista que muestra los abonos normales que aún no cadeucaron y que aún tienen viajes disponibles*/
+/*Vista no actualizable*/
 CREATE  OR REPLACE VIEW vista_ab_normales_disponibles AS
 SELECT a.id_abono,
     a.fecha_contrato,
@@ -391,6 +397,9 @@ INSERT INTO EMPLEADO (dni, contrato) VALUES ('46813937H', 2);
 INSERT INTO EMPLEADO (dni, contrato) VALUES ('82082351Y', 3);
 INSERT INTO EMPLEADO (dni, contrato) VALUES ('35537699R', 4);
 
+-- tabla FAMILIAR
+INSERT INTO FAMILIAR (dni, empleado, relacion) VALUES ('35225389S', '35674253N', 'Padre');
+
 -- tabla CONDUCTOR
 
 INSERT INTO CONDUCTOR (dni, num_licencia) VALUES ('35674253N', '22301');
@@ -431,7 +440,6 @@ INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('9191SOL', '55', '4
 INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('3223BUS', '50', '1');
 INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('3060RTX', '50', '5');
 INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('4455USB', '50', '6');
-
 
 -- tabla PARADA
 INSERT INTO PARADA (cod_parada, direccion) VALUES ('1', 'RÚA CURROS ENRIQUEZ');
@@ -479,24 +487,31 @@ INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('2', TO_DAT
 INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('3', TO_DATE('28/07/2023', 'DD/MM/YYYY'),'2','82082351Y','6754BDI');
 
 -- tabla SERVICIO
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('1', '0.50', '35225389S');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('2', '0.70', '59643874T');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('3', '3.10', '25647312F');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('4', '40.00', '35674242X');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('5', '50.00', '35749531Z');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('6', '60.00', '35674253N');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('7', '7000.00', '46813937H');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('8', '8300.00', '82082351Y');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('9', '90.00', '35537699R');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('10', '100.00', '35225389S');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('11', '110.00', '59643874T');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('12', '120.00', '25647312F');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('13', '130.00', '35674242X');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('14', '140.00', '35749531Z');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('15', '150.00', '35674253N');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('16', '160.00', '46813937H');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('17', '170.00', '82082351Y');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('1', '0,50', '35225389S');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('2', '0,70', '59643874T');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('3', '3,10', '25647312F');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('4', '40,00', '35674242X');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('5', '50,00', '35749531Z');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('6', '60,00', '35674253N');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('7', '7000,00', '46813937H');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('8', '8300,00', '82082351Y');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('9', '90,00', '35537699R');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('10', '100,00', '35225389S');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('11', '110,00', '59643874T');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('12', '120,00', '25647312F');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('13', '130,00', '35674242X');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('14', '140,00', '35749531Z');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('15', '150,00', '35674253N');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('16', '160,00', '46813937H');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('17', '170,00', '35225389S');
 
+-- tabla BILLETE
+INSERT INTO BILLETE (id_billete, viaje) VALUES ('1', '1');
+INSERT INTO BILLETE (id_billete, viaje) VALUES ('2', '2');
+INSERT INTO BILLETE (id_billete, viaje) VALUES ('3', '3');
+INSERT INTO BILLETE (id_billete, viaje) VALUES ('4', '1');
+INSERT INTO BILLETE (id_billete, viaje) VALUES ('5', '2');
+INSERT INTO BILLETE (id_billete, viaje) VALUES ('6', '3');
 
 -- tabla VENTA_BILLETE
 INSERT INTO VENTA_BILLETE (id_servicio, billete) VALUES ('1', '1');
@@ -504,9 +519,9 @@ INSERT INTO VENTA_BILLETE (id_servicio, billete) VALUES ('2', '2');
 INSERT INTO VENTA_BILLETE (id_servicio, billete) VALUES ('3', '3');
 
 -- tabla BILLETE_COMBINADO
-INSERT INTO BILLETE_COMBINADO (id_servicio, tipo, billete) VALUES ('4', 'BUS+TREN', '1');
-INSERT INTO BILLETE_COMBINADO (id_servicio, tipo, billete) VALUES ('5', 'BUS+AVION', '2');
-INSERT INTO BILLETE_COMBINADO (id_servicio, tipo, billete) VALUES ('6', 'BUS+FERRY', '3');
+INSERT INTO BILLETE_COMBINADO (id_servicio, tipo, billete) VALUES ('4', 'BUS+TREN', '4');
+INSERT INTO BILLETE_COMBINADO (id_servicio, tipo, billete) VALUES ('5', 'BUS+AVION', '5');
+INSERT INTO BILLETE_COMBINADO (id_servicio, tipo, billete) VALUES ('6', 'BUS+FERRY', '6');
 
 -- tabla ALQUILER_AUTOBUS
 INSERT INTO ALQUILER_AUTOBUS (id_servicio, autobus) VALUES ('7', '2234KFC');
@@ -549,7 +564,7 @@ INSERT INTO ABONO_EMPLEADO(id_abono, empleado, descuento) VALUES(7, '35674253N',
 INSERT INTO ABONO_EMPLEADO(id_abono, empleado, descuento) VALUES(8, '46813937H', 30);
 
 -- tabla ABONO_FAMILIAR
-INSERT INTO ABONO_FAMILIAR(id_abono, familiar, empleado, descuento) VALUES(9, '35225389S', '46813937H', 10);
+INSERT INTO ABONO_FAMILIAR(id_abono, familiar, empleado, descuento) VALUES(9, '35225389S', '35674253N', 10);
 
 
 -- SENTENCIAS SQL DE COMPROBACIÓN
