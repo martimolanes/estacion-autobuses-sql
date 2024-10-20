@@ -1,34 +1,38 @@
-DROP TABLE persona CASCADE CONSTRAINTS;
-DROP TABLE telefono CASCADE CONSTRAINTS;
-DROP TABLE pasajero CASCADE CONSTRAINTS;
-DROP TABLE contrato CASCADE CONSTRAINTS;
-DROP TABLE empleado CASCADE CONSTRAINTS;
-DROP TABLE familiar CASCADE CONSTRAINTS;
-DROP TABLE conductor CASCADE CONSTRAINTS;
-DROP TABLE empleado_estacion CASCADE CONSTRAINTS;
-DROP TABLE empresa CASCADE CONSTRAINTS;
-DROP TABLE autobus CASCADE CONSTRAINTS;
-DROP TABLE linea CASCADE CONSTRAINTS;
-DROP TABLE autobus_urbano CASCADE CONSTRAINTS;
-DROP TABLE parada CASCADE CONSTRAINTS;
-DROP TABLE lineas_paradas CASCADE CONSTRAINTS;
-DROP TABLE autobus_interurbano CASCADE CONSTRAINTS;
-DROP TABLE ruta CASCADE CONSTRAINTS;
-DROP TABLE viaje CASCADE CONSTRAINTS;
-DROP TABLE servicio CASCADE CONSTRAINTS;
-DROP TABLE venta_billete CASCADE CONSTRAINTS;
-DROP TABLE billete CASCADE CONSTRAINTS;
-DROP TABLE billete_combinado CASCADE CONSTRAINTS;
-DROP TABLE alquiler_autobus CASCADE CONSTRAINTS;
-DROP TABLE abono CASCADE CONSTRAINTS;
-DROP TABLE venta_abono CASCADE CONSTRAINTS;
-DROP TABLE abono_normal CASCADE CONSTRAINTS;
-DROP TABLE abono_ilimitado CASCADE CONSTRAINTS;
-DROP TABLE abono_empleado CASCADE CONSTRAINTS;
-DROP TABLE abono_familiar CASCADE CONSTRAINTS;
+SET AUTOCOMMIT on;
+SET SERVEROUTPUT on;
 
+-- Sentencias de inicializacion
+DROP TABLE PERSONA CASCADE CONSTRAINTS;
+DROP TABLE TELEFONO CASCADE CONSTRAINTS;
+DROP TABLE PASAJERO CASCADE CONSTRAINTS;
+DROP TABLE CONTRATO CASCADE CONSTRAINTS;
+DROP TABLE EMPLEADO CASCADE CONSTRAINTS;
+DROP TABLE FAMILIAR CASCADE CONSTRAINTS;
+DROP TABLE CONDUCTOr CASCADE CONSTRAINTS;
+DROP TABLE EMPLEADO_ESTACION CASCADE CONSTRAINTS;
+DROP TABLE EMPRESA CASCADE CONSTRAINTS;
+DROP TABLE AUTOBUS CASCADE CONSTRAINTS;
+DROP TABLE LINEA CASCADE CONSTRAINTS;
+DROP TABLE AUTOBUS_URBANO CASCADE CONSTRAINTS;
+DROP TABLE PARADA CASCADE CONSTRAINTS;
+DROP TABLE LINEAS_PARADAS CASCADE CONSTRAINTS;
+DROP TABLE AUTOBUS_INTERURBANO CASCADE CONSTRAINTS;
+DROP TABLE RUTA CASCADE CONSTRAINTS;
+DROP TABLE VIAJE CASCADE CONSTRAINTS;
+DROP TABLE SERVICIO CASCADE CONSTRAINTS;
+DROP TABLE VENTA_BILLETE CASCADE CONSTRAINTS;
+DROP TABLE BILLETE CASCADE CONSTRAINTS;
+DROP TABLE BILLETE_COMBINADO CASCADE CONSTRAINTS;
+DROP TABLE ALQUILER_AUTOBUS CASCADE CONSTRAINTS;
+DROP TABLE ABONO CASCADE CONSTRAINTS;
+DROP TABLE VENTA_ABONO CASCADE CONSTRAINTS;
+DROP TABLE ABONO_NORMAL CASCADE CONSTRAINTS;
+DROP TABLE ABONO_ILIMITADO CASCADE CONSTRAINTS;
+DROP TABLE ABONO_EMPLEADO CASCADE CONSTRAINTS;
+DROP TABLE ABONO_FAMILIAR CASCADE CONSTRAINTS;
 
-CREATE TABLE persona(
+--Sentencias de creacion de tablas
+CREATE TABLE PERSONA(
     dni VARCHAR(9) NOT NULL CHECK (REGEXP_LIKE (dni, '^[0-9]{8}[A-Z]$')),
     nombre VARCHAR(30) NOT NULL CHECK (LENGTH (nombre) > 0),
     apellidos VARCHAR(60) NOT NULL CHECK (LENGTH (apellidos) > 0),
@@ -37,7 +41,7 @@ CREATE TABLE persona(
     PRIMARY KEY(dni)
 );
 
-CREATE TABLE telefono(
+CREATE TABLE TELEFONO(
     dni VARCHAR(9) NOT NULL,
     telefono VARCHAR(9) NOT NULL UNIQUE CHECK (REGEXP_LIKE (telefono, '^[0-9]{9}$')),
     
@@ -45,7 +49,7 @@ CREATE TABLE telefono(
     FOREIGN KEY (dni) REFERENCES persona(dni) ON DELETE CASCADE
 );
 
-CREATE TABLE pasajero(
+CREATE TABLE PASAJERO(
     dni VARCHAR(9) NOT NULL,
     acompanante VARCHAR(9),
     
@@ -55,7 +59,7 @@ CREATE TABLE pasajero(
     FOREIGN KEY (acompanante) REFERENCES pasajero(dni) ON DELETE CASCADE --si se borra el acompañante tambi�n el pasajero
 );
 
-CREATE TABLE contrato(
+CREATE TABLE CONTRATO(
     id_contrato NUMBER NOT NULL CHECK (id_contrato > 0),
     tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('INDEFINIDO', 'TEMPORAL', 'PRACTICAS', 'FORMACION')),
     fecha_inicio DATE NOT NULL,
@@ -67,7 +71,7 @@ CREATE TABLE contrato(
     CHECK(fecha_fin IS NULL OR fecha_fin > fecha_inicio)
 );
 
-CREATE TABLE empleado(
+CREATE TABLE EMPLEADO(
     dni VARCHAR(9) NOT NULL,
     contrato NUMBER NOT NULL,
     
@@ -76,7 +80,7 @@ CREATE TABLE empleado(
     FOREIGN KEY (contrato) REFERENCES contrato(id_contrato) ON DELETE CASCADE
 );
 
-CREATE TABLE familiar(
+CREATE TABLE FAMILIAR(
     dni VARCHAR(9) NOT NULL CHECK (REGEXP_LIKE (dni, '^[0-9]{8}[A-Z]$')),
     empleado VARCHAR(9) NOT NULL,
     --es subclase de persona o no?
@@ -86,7 +90,7 @@ CREATE TABLE familiar(
     FOREIGN KEY (empleado) REFERENCES empleado(dni) ON DELETE CASCADE
 );
 
-CREATE TABLE conductor(
+CREATE TABLE CONDUCTOR(
     dni VARCHAR(9) NOT NULL,
     num_licencia VARCHAR(15) NOT NULL UNIQUE CHECK (LENGTH(num_licencia) > 0),
     
@@ -94,7 +98,7 @@ CREATE TABLE conductor(
     FOREIGN KEY(dni) REFERENCES empleado(dni) ON DELETE CASCADE
 );
 
-CREATE TABLE empleado_estacion(
+CREATE TABLE EMPLEADO_ESTACION(
     dni VARCHAR(9) NOT NULL,
     abonos_vendidos NUMBER NOT NULL CHECK (abonos_vendidos >= 0),
     billetes_vendidos NUMBER NOT NULL CHECK (billetes_vendidos >= 0),
@@ -103,7 +107,7 @@ CREATE TABLE empleado_estacion(
     FOREIGN KEY (dni) REFERENCES empleado(dni) ON DELETE CASCADE
 );
 
-CREATE TABLE empresa(
+CREATE TABLE EMPRESA(
     cif VARCHAR(9) NOT NULL CHECK (REGEXP_LIKE(cif, '^[A-Z][0-9]{7}[A-Z]$')),
     nombre VARCHAR(30) NOT NULL UNIQUE CHECK (LENGTH(nombre) > 0),
     direccion VARCHAR(60) NOT NULL CHECK (LENGTH(direccion) > 0),
@@ -112,7 +116,7 @@ CREATE TABLE empresa(
     PRIMARY KEY (cif)
 );
 
-CREATE TABLE autobus(
+CREATE TABLE AUTOBUS(
     matricula VARCHAR(7) NOT NULL CHECK (REGEXP_LIKE(matricula, '^[0-9]{4}[A-Z]{3}$')),
     num_asientos NUMBER NOT NULL CHECK  (num_asientos > 0),
     modelo VARCHAR(30) NOT NULL CHECK (LENGTH(modelo) > 0),
@@ -124,14 +128,14 @@ CREATE TABLE autobus(
     FOREIGN KEY (propietario) REFERENCES empresa(cif) ON DELETE CASCADE
 );
 
-CREATE TABLE linea(
+CREATE TABLE LINEA(
     num_linea NUMBER NOT NULL CHECK (num_linea > 0), --puede ser varchar si es tipo '12B'
     descripcion VARCHAR(40) NOT NULL CHECK (LENGTH(descripcion) > 0),
     
     PRIMARY KEY(num_linea)
 );
 
-CREATE TABLE autobus_urbano(
+CREATE TABLE AUTOBUS_URBANO(
     matricula VARCHAR(7) NOT NULL,
     aforo NUMBER NOT NULL CHECK (aforo > 0),
     linea NUMBER NOT NULL,
@@ -140,14 +144,14 @@ CREATE TABLE autobus_urbano(
     FOREIGN KEY (linea) REFERENCES linea(num_linea) ON DELETE CASCADE
 );
 
-CREATE TABLE parada(
+CREATE TABLE PARADA(
     cod_parada NUMBER NOT NULL CHECK (cod_parada > 0), --puede ser varchar tambien
     direccion VARCHAR(50) NOT NULL UNIQUE CHECK (LENGTH(direccion) > 0),
     
     PRIMARY KEY(cod_parada)
 );
 
-CREATE TABLE lineas_paradas(
+CREATE TABLE LINEAS_PARADAS(
     linea NUMBER NOT NULL,
     parada NUMBER NOT NULL,
     orden NUMBER NOT NULL CHECK (orden > 0),
@@ -158,7 +162,7 @@ CREATE TABLE lineas_paradas(
     UNIQUE (linea, orden)
 );
 
-CREATE TABLE autobus_interurbano(
+CREATE TABLE AUTOBUS_INTERURBANO(
     matricula VARCHAR(7) NOT NULL,
     num_plazas NUMBER NOT NULL CHECK (num_plazas > 0),
     
@@ -166,7 +170,7 @@ CREATE TABLE autobus_interurbano(
     FOREIGN KEY (matricula) REFERENCES autobus(matricula) ON DELETE CASCADE
 );
 
-CREATE TABLE ruta(
+CREATE TABLE RUTA(
     id_ruta NUMBER NOT NULL CHECK (id_ruta > 0),
     origen VARCHAR(50) NOT NULL CHECK (LENGTH(origen) > 0),
     destino VARCHAR(50) NOT NULL CHECK (LENGTH(destino) > 0),
@@ -175,7 +179,7 @@ CREATE TABLE ruta(
     PRIMARY KEY (id_ruta)
 );
 
-CREATE TABLE viaje(
+CREATE TABLE VIAJE(
     id_viaje NUMBER NOT NULL CHECK (id_viaje > 0),
     fecha DATE NOT NULL,
     ruta NUMBER,
@@ -188,15 +192,16 @@ CREATE TABLE viaje(
     FOREIGN KEY (autobus) REFERENCES autobus(matricula) ON DELETE SET NULL
 );
 
-CREATE TABLE servicio(
+CREATE TABLE SERVICIO(
     id_servicio NUMBER NOT NULL CHECK (id_servicio > 0),
+    precio NUMBER(5,2) NOT NULL CHECK (precio > 0),
     contratado_por VARCHAR(9),
     
     PRIMARY KEY (id_servicio),
     FOREIGN KEY (contratado_por) REFERENCES pasajero(dni) ON DELETE SET NULL
 );
 
-CREATE TABLE billete(
+CREATE TABLE BILLETE(
     id_billete NUMBER NOT NULL CHECK (id_billete > 0),
     viaje NUMBER NOT NULL,
     
@@ -204,7 +209,7 @@ CREATE TABLE billete(
     FOREIGN KEY (viaje) REFERENCES viaje(id_viaje) ON DELETE CASCADE
 );
 
-CREATE TABLE venta_billete(
+CREATE TABLE VENTA_BILLETE(
     id_servicio NUMBER NOT NULL,
     billete NUMBER NOT NULL,
     
@@ -213,7 +218,7 @@ CREATE TABLE venta_billete(
     FOREIGN KEY (billete) REFERENCES billete(id_billete) ON DELETE CASCADE
 );
 
-CREATE TABLE billete_combinado(
+CREATE TABLE BILLETE_COMBINADO(
     id_servicio NUMBER NOT NULL,
     tipo VARCHAR(20) NOT NULL CHECK(tipo IN ('BUS+TREN', 'BUS+AVION', 'BUS+FERRY')),
     billete NUMBER NOT NULL,
@@ -222,7 +227,7 @@ CREATE TABLE billete_combinado(
     FOREIGN KEY (billete) REFERENCES billete(id_billete) ON DELETE CASCADE
 );
     
-CREATE TABLE alquiler_autobus(
+CREATE TABLE ALQUILER_AUTOBUS(
     id_servicio NUMBER NOT NULL,
     autobus VARCHAR(7) NOT NULL,
     
@@ -231,9 +236,8 @@ CREATE TABLE alquiler_autobus(
     FOREIGN KEY (autobus) REFERENCES autobus_interurbano(matricula) ON DELETE CASCADE
 );
 
-CREATE TABLE abono(
+CREATE TABLE ABONO(
     id_abono NUMBER NOT NULL CHECK (id_abono > 0),
-    precio NUMBER NOT NULL CHECK (precio > 0),
     fecha_contrato DATE NOT NULL,
     fecha_caducidad DATE NOT NULL,
     
@@ -242,7 +246,7 @@ CREATE TABLE abono(
     CHECK(fecha_caducidad > fecha_contrato)
 );
 
-CREATE TABLE venta_abono(
+CREATE TABLE VENTA_ABONO(
     id_servicio NUMBER NOT NULL,
     abono NUMBER NOT NULL,
         
@@ -251,7 +255,7 @@ CREATE TABLE venta_abono(
     FOREIGN KEY (abono) REFERENCES abono(id_abono) ON DELETE CASCADE
 );
 
-CREATE TABLE abono_normal(
+CREATE TABLE ABONO_NORMAL(
     id_abono NUMBER NOT NULL,
     limite_viajes NUMBER NOT NULL CHECK (limite_viajes > 0),
     viajes_consumidos NUMBER NOT NULL CHECK (viajes_consumidos >= 0),
@@ -262,7 +266,7 @@ CREATE TABLE abono_normal(
     CHECK (limite_viajes >= viajes_consumidos)
 );
 
-CREATE TABLE abono_ilimitado(
+CREATE TABLE ABONO_ILIMITADO(
     id_abono NUMBER NOT NULL,
     
     PRIMARY KEY(id_abono),
@@ -270,7 +274,7 @@ CREATE TABLE abono_ilimitado(
 );
 
 
-CREATE TABLE abono_empleado(
+CREATE TABLE ABONO_EMPLEADO(
     id_abono NUMBER NOT NULL,
     empleado VARCHAR(9) NOT NULL,
     descuento NUMBER NOT NULL CHECK (descuento BETWEEN 10 AND 60),
@@ -280,7 +284,7 @@ CREATE TABLE abono_empleado(
     FOREIGN KEY (empleado) REFERENCES empleado(dni) ON DELETE CASCADE
 );
 
-CREATE TABLE abono_familiar(
+CREATE TABLE ABONO_FAMILIAR(
     id_abono NUMBER NOT NULL,
     familiar VARCHAR(9) NOT NULL,
     empleado VARCHAR(9) NOT NULL,
@@ -291,7 +295,59 @@ CREATE TABLE abono_familiar(
     FOREIGN KEY (familiar, empleado) REFERENCES familiar(dni, empleado) ON DELETE CASCADE
 );
 
--- INSERTS
+-- Sentencias de Creacion de Indices
+
+/*Indice para buscar de manera mas rápida a una persona, filtrando primero por nombre y después por apellido*/
+CREATE INDEX indice_persona ON persona(nombre, apellidos);
+
+/*Indice para buscar contratos por la fecha de inicio*/
+CREATE INDEX indice_contrato ON contrato(fecha_inicio);
+
+/*Indice para buscar abonos por la fecha de contrato*/
+CREATE INDEX indice_abono ON abono(fecha_contrato);
+
+/*Indice para buscar un viaje por fecha*/
+CREATE INDEX indice_viaje ON viaje(fecha);
+
+-- Sentencias para la creacion de vistas
+
+/*Vista que muestra la edad*/
+/*Vista actualizable*/
+CREATE OR REPLACE VIEW vista_persona AS
+   SELECT dni, (nombre || ' ' || apellidos) AS nombre_completo,
+   fecha_nacimiento, (sysdate - fecha_nacimiento)/365 AS edad
+FROM persona;
+
+/*Vista que muestra los pasajeros menores de edad*/
+/*Vista no actualizable*/
+CREATE OR REPLACE VIEW Pasajeros_menores AS
+   SELECT p.dni, p.nombre, p.apellidos, p.fecha_nacimiento
+   FROM Persona p
+   JOIN Pasajero pa ON p.dni = pa.dni
+   WHERE (sysdate - p.fecha_nacimiento) / 365 < 18;
+   
+/*Vista que muestra la información de un contrato y un empleado*/
+/*Vista no actualizable*/
+CREATE  OR REPLACE VIEW vista_info_contrato AS
+SELECT e.dni,
+   c.id_contrato,
+   c.tipo,
+   c.salario,
+   c.horas_semana,
+   c.fecha_inicio,
+   c.fecha_fin
+FROM EMPLEADO e JOIN CONTRATO c ON e.CONTRATO = c.ID_CONTRATO JOIN PERSONA p ON e.dni= p.dni;
+
+/*Vista que muestra los abonos normales que aún no cadeucaron y que aún tienen viajes disponibles*/
+CREATE  OR REPLACE VIEW vista_ab_normales_disponibles AS
+SELECT a.id_abono,
+    a.fecha_contrato,
+    a.fecha_caducidad,
+    (an.limite_viajes - an.viajes_consumidos) AS viajes_restantes
+FROM ABONO a JOIN ABONO_NORMAL an ON a.id_abono=an.id_abono
+WHERE fecha_caducidad > sysdate AND (an.limite_viajes - an.viajes_consumidos) > 0;
+
+-- Sentencias de inserción
 
 -- tabla PERSONA
 INSERT INTO PERSONA(dni, nombre, apellidos, fecha_nacimiento ) VALUES('35225389S', 'Pepe', 'González', TO_DATE('10/02/1995','DD/MM/YYYY'));
@@ -310,7 +366,9 @@ INSERT INTO PASAJERO(dni) VALUES('35225389S');
 INSERT INTO PASAJERO(dni) VALUES('59643874T');
 INSERT INTO PASAJERO(dni) VALUES('25647312F');
 INSERT INTO PASAJERO(dni) VALUES('35674242X');
-INSERT INTO PASAJERO(dni, acompanante) VALUES('35749531Z');
+INSERT INTO PASAJERO(dni) VALUES('35674253N');
+INSERT INTO PASAJERO(dni) VALUES('46813937H');
+INSERT INTO PASAJERO(dni, acompanante) VALUES('35749531Z', NULL);
 
 
 -- tabla TELEFONO
@@ -339,49 +397,43 @@ INSERT INTO CONDUCTOR (dni, num_licencia) VALUES ('35674253N', '22301');
 INSERT INTO CONDUCTOR (dni, num_licencia) VALUES ('82082351Y', '22536');
 INSERT INTO CONDUCTOR (dni, num_licencia) VALUES ('35537699R', '22456');
 
--- tabla ADMINISTRATIVO 
-
-INSERT INTO ADMINISTRATIVO (dni, abonos_vendidos) VALUES ('46813937H', '25');
+-- tabla EMPLEADO_ESTACION
+INSERT INTO EMPLEADO_ESTACION (dni, abonos_vendidos, billetes_vendidos) VALUES ('46813937H', '25', '10');
 
 -- tabla EMPRESA
-
 INSERT INTO EMPRESA (cif, nombre, direccion, telefono) VALUES ('B2322468R', 'BUSDII', 'AVENIDA OTERO PEDRAYO', '926434765');
 INSERT INTO EMPRESA (cif, nombre, direccion, telefono) VALUES ('P2353389X', 'RUTADIRECTA', 'RÚA DO PROGRESO', '957875323');
 
 -- tabla AUTOBUS
-
-INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('5624 SQL', '30', 'Iveco Citelis', TO_DATE('21/08/2024', 'DD/MM/YYYY'), 'B2322468R', 'URBANO');
-INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('2024 BRR', '30', 'Iveco Citelis', TO_DATE('01/05/2024', 'DD/MM/YYYY'), 'B2322468R', 'URBANO');
-INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('8644 NMO', '45', 'Iveco Citelis Articulado', TO_DATE('28/04/2024', 'DD/MM/YYYY'), 'B2322468R', 'URBANO');
-INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('9191 SOL', '45', 'Iveco Citelis Articulado', TO_DATE('15/11/2023', 'DD/MM/YYYY'), 'B2322468R', 'URBANO');
-INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('2234 KFC', '60', 'Iveco Citelis', TO_DATE('30/09/2024', 'DD/MM/YYYY'), 'B2322468R', 'INTERURBANO');
-INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('6754 BDI', '75', 'Mercedes Benz O-405 G', TO_DATE('10/10/2024', 'DD/MM/YYYY'), 'P2353389X', 'INTERURBANO');
-INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('3223 BUS', '40', 'Mercedes Benz O-405 N2', TO_DATE('14/12/2023', 'DD/MM/YYYY'), 'P2353389X', 'URBANO');
-INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('3060 RTX', '40', 'Mercedes Benz O-405 N2', TO_DATE('24/12/2023', 'DD/MM/YYYY'), 'P2353389X', 'URBANO');
-INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('4455 USB', '40', 'Mercedes Benz O-405 N2', TO_DATE('14/10/2024', 'DD/MM/YYYY'), 'P2353389X', 'URBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('5624SQL', '30', 'Iveco Citelis', TO_DATE('21/08/2024', 'DD/MM/YYYY'), 'B2322468R', 'URBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('2024BRR', '30', 'Iveco Citelis', TO_DATE('01/05/2024', 'DD/MM/YYYY'), 'B2322468R', 'URBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('8644NMO', '45', 'Iveco Citelis Articulado', TO_DATE('28/04/2024', 'DD/MM/YYYY'), 'B2322468R', 'URBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('9191SOL', '45', 'Iveco Citelis Articulado', TO_DATE('15/11/2023', 'DD/MM/YYYY'), 'B2322468R', 'URBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('2234KFC', '60', 'Iveco Citelis', TO_DATE('30/09/2024', 'DD/MM/YYYY'), 'B2322468R', 'INTERURBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('6754BDI', '75', 'Mercedes Benz O-405 G', TO_DATE('10/10/2024', 'DD/MM/YYYY'), 'P2353389X', 'INTERURBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('3223BUS', '40', 'Mercedes Benz O-405 N2', TO_DATE('14/12/2023', 'DD/MM/YYYY'), 'P2353389X', 'URBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('3060RTX', '40', 'Mercedes Benz O-405 N2', TO_DATE('24/12/2023', 'DD/MM/YYYY'), 'P2353389X', 'URBANO');
+INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario, tipo_autobus) VALUES ('4455USB', '40', 'Mercedes Benz O-405 N2', TO_DATE('14/10/2024', 'DD/MM/YYYY'), 'P2353389X', 'URBANO');
 
 -- tabla LINEA
-
-INSERT INTO LINEA (num_linea, descripcion) VALUES ('1', '');
-INSERT INTO LINEA (num_linea, descripcion) VALUES ('2', '');
-INSERT INTO LINEA (num_linea, descripcion) VALUES ('3', '');
-INSERT INTO LINEA (num_linea, descripcion) VALUES ('4', '');
-INSERT INTO LINEA (num_linea, descripcion) VALUES ('5', '');
-INSERT INTO LINEA (num_linea, descripcion) VALUES ('6', '');
+INSERT INTO LINEA (num_linea, descripcion) VALUES ('1', 'San Lázaro - Residencia');
+INSERT INTO LINEA (num_linea, descripcion) VALUES ('2', 'Alameda - Curros Enríquez');
+INSERT INTO LINEA (num_linea, descripcion) VALUES ('3', 'O Cumial- Seixalvo');
+INSERT INTO LINEA (num_linea, descripcion) VALUES ('4', 'Tanatorio - Saínza');
+INSERT INTO LINEA (num_linea, descripcion) VALUES ('5', 'Covadonga - Quintela');
+INSERT INTO LINEA (num_linea, descripcion) VALUES ('6', 'Rairo - Cudeiro');
 
 -- tabla AUTOBUS_URBANO
-
-INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('5624 SQL', '40', '1');
-INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('2024 BRR', '40', '3');
-INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('8644 NMO', '55', '2');
-INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('9191 SOL', '55', '4');
-INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('3223 BUS', '50', '1');
-INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('3060 RTX', '50', '5');
-INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('4455 USB', '50', '6');
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('5624SQL', '40', '1');
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('2024BRR', '40', '3');
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('8644NMO', '55', '2');
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('9191SOL', '55', '4');
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('3223BUS', '50', '1');
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('3060RTX', '50', '5');
+INSERT INTO AUTOBUS_URBANO (matricula, aforo, linea) VALUES ('4455USB', '50', '6');
 
 
 -- tabla PARADA
-
 INSERT INTO PARADA (cod_parada, direccion) VALUES ('1', 'RÚA CURROS ENRIQUEZ');
 INSERT INTO PARADA (cod_parada, direccion) VALUES ('2', 'AVENIDA DE MARIN');
 INSERT INTO PARADA (cod_parada, direccion) VALUES ('3', 'PARQUE DE SAN LAZARO');
@@ -389,7 +441,6 @@ INSERT INTO PARADA (cod_parada, direccion) VALUES ('4', 'XARDIN DO POSIO');
 INSERT INTO PARADA (cod_parada, direccion) VALUES ('5', 'AVENIDA DE SANTIAGO');
 
 -- tabla LINEAS_PARADAS
-
 INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '2', '1');
 INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '1', '2');
 INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '3', '3');
@@ -415,16 +466,128 @@ INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('6', '1', '2');
 INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('6', '3', '3');
 
 -- tabla AUTOBUS_INTERURBANO
-
-INSERT INTO AUTOBUS_INTERURBANO (matricula, num_plazas) VALUES ('2234 KFC', '60');
-INSERT INTO AUTOBUS_INTERURBANO (matricula, num_plazas) VALUES ('6754 BDI', '75');
+INSERT INTO AUTOBUS_INTERURBANO (matricula, num_plazas) VALUES ('2234KFC', '60');
+INSERT INTO AUTOBUS_INTERURBANO (matricula, num_plazas) VALUES ('6754BDI', '75');
 
 -- tabla RUTA
-
 INSERT INTO RUTA (id_ruta, origen, destino, duracion) VALUES ('1', 'OURENSE', 'SANTIAGO', '120');
 INSERT INTO RUTA (id_ruta, origen, destino, duracion) VALUES ('2', 'OURENSE', 'VIGO', '90');
 
 -- tabla VIAJE
+INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('1', TO_DATE('14/03/2019', 'DD/MM/YYYY'),'2','35674253N','2024BRR');
+INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('2', TO_DATE('04/10/2020', 'DD/MM/YYYY'),'1','35537699R','3060RTX');
+INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('3', TO_DATE('28/07/2023', 'DD/MM/YYYY'),'2','82082351Y','6754BDI');
 
-INSERT INTO VIAJE (id_viaje, fecha, ruta, conductor, autbous) VALUES ();
+-- tabla SERVICIO
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('1', '0.50', '35225389S');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('2', '0.70', '59643874T');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('3', '3.10', '25647312F');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('4', '40.00', '35674242X');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('5', '50.00', '35749531Z');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('6', '60.00', '35674253N');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('7', '7000.00', '46813937H');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('8', '8300.00', '82082351Y');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('9', '90.00', '35537699R');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('10', '100.00', '35225389S');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('11', '110.00', '59643874T');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('12', '120.00', '25647312F');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('13', '130.00', '35674242X');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('14', '140.00', '35749531Z');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('15', '150.00', '35674253N');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('16', '160.00', '46813937H');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('17', '170.00', '82082351Y');
 
+
+-- tabla VENTA_BILLETE
+INSERT INTO VENTA_BILLETE (id_servicio, billete) VALUES ('1', '1');
+INSERT INTO VENTA_BILLETE (id_servicio, billete) VALUES ('2', '2');
+INSERT INTO VENTA_BILLETE (id_servicio, billete) VALUES ('3', '3');
+
+-- tabla BILLETE_COMBINADO
+INSERT INTO BILLETE_COMBINADO (id_servicio, tipo, billete) VALUES ('4', 'BUS+TREN', '1');
+INSERT INTO BILLETE_COMBINADO (id_servicio, tipo, billete) VALUES ('5', 'BUS+AVION', '2');
+INSERT INTO BILLETE_COMBINADO (id_servicio, tipo, billete) VALUES ('6', 'BUS+FERRY', '3');
+
+-- tabla ALQUILER_AUTOBUS
+INSERT INTO ALQUILER_AUTOBUS (id_servicio, autobus) VALUES ('7', '2234KFC');
+INSERT INTO ALQUILER_AUTOBUS (id_servicio, autobus) VALUES ('8', '6754BDI');
+
+-- tabla ABONO
+INSERT INTO ABONO(id_abono, fecha_contrato, fecha_caducidad) VALUES (1, TO_DATE('01/01/2022', 'DD/MM/YYYY'), TO_DATE('31/12/2022', 'DD/MM/YYYY'));
+INSERT INTO ABONO(id_abono, fecha_contrato, fecha_caducidad) VALUES (2, TO_DATE('01/06/2024', 'DD/MM/YYYY'), TO_DATE('31/12/2025', 'DD/MM/YYYY'));
+INSERT INTO ABONO(id_abono, fecha_contrato, fecha_caducidad) VALUES (3, TO_DATE('15/09/2024', 'DD/MM/YYYY'), TO_DATE('31/12/2024', 'DD/MM/YYYY'));
+INSERT INTO ABONO(id_abono, fecha_contrato, fecha_caducidad) VALUES (4, TO_DATE('01/05/2024', 'DD/MM/YYYY'), TO_DATE('30/11/2024', 'DD/MM/YYYY'));
+INSERT INTO ABONO(id_abono, fecha_contrato, fecha_caducidad) VALUES (5, TO_DATE('01/01/2023', 'DD/MM/YYYY'), TO_DATE('31/12/2024', 'DD/MM/YYYY'));
+INSERT INTO ABONO(id_abono, fecha_contrato, fecha_caducidad) VALUES (6, TO_DATE('16/04/2024', 'DD/MM/YYYY'), TO_DATE('16/04/2025', 'DD/MM/YYYY'));
+INSERT INTO ABONO(id_abono, fecha_contrato, fecha_caducidad) VALUES (7, TO_DATE('07/07/2024', 'DD/MM/YYYY'), TO_DATE('25/12/2024', 'DD/MM/YYYY'));
+INSERT INTO ABONO(id_abono, fecha_contrato, fecha_caducidad) VALUES (8, TO_DATE('30/04/2024', 'DD/MM/YYYY'), TO_DATE('27/01/2025', 'DD/MM/YYYY'));
+INSERT INTO ABONO(id_abono, fecha_contrato, fecha_caducidad) VALUES (9, TO_DATE('30/05/2024', 'DD/MM/YYYY'), TO_DATE('19/02/2026', 'DD/MM/YYYY'));
+
+-- tabla VENTA_ABONO
+INSERT INTO VENTA_ABONO(id_servicio, abono) VALUES(9,1);
+INSERT INTO VENTA_ABONO(id_servicio, abono) VALUES(10,2);
+INSERT INTO VENTA_ABONO(id_servicio, abono) VALUES(11,3);
+INSERT INTO VENTA_ABONO(id_servicio, abono) VALUES(12,4);
+INSERT INTO VENTA_ABONO(id_servicio, abono) VALUES(13,5);
+INSERT INTO VENTA_ABONO(id_servicio, abono) VALUES(14,6);
+INSERT INTO VENTA_ABONO(id_servicio, abono) VALUES(15,7);
+INSERT INTO VENTA_ABONO(id_servicio, abono) VALUES(16,8);
+INSERT INTO VENTA_ABONO(id_servicio, abono) VALUES(17,9);
+
+-- tabla ABONO_NORMAL
+INSERT INTO ABONO_NORMAL(id_abono, limite_viajes, viajes_consumidos) VALUES(1, 10, 3);
+INSERT INTO ABONO_NORMAL(id_abono, limite_viajes, viajes_consumidos) VALUES(2, 20, 9);
+INSERT INTO ABONO_NORMAL(id_abono, limite_viajes, viajes_consumidos) VALUES(3, 5, 5);
+INSERT INTO ABONO_NORMAL(id_abono, limite_viajes, viajes_consumidos) VALUES(4, 10, 7);
+
+-- tabla ABONO_ILIMITADO
+INSERT INTO ABONO_ILIMITADO(id_abono) VALUES(5);
+INSERT INTO ABONO_ILIMITADO(id_abono) VALUES(6);
+
+-- tabla ABONO_EMPLEADO
+INSERT INTO ABONO_EMPLEADO(id_abono, empleado, descuento) VALUES(7, '35674253N', 20);
+INSERT INTO ABONO_EMPLEADO(id_abono, empleado, descuento) VALUES(8, '46813937H', 30);
+
+-- tabla ABONO_FAMILIAR
+INSERT INTO ABONO_FAMILIAR(id_abono, familiar, empleado, descuento) VALUES(9, '35225389S', '46813937H', 10);
+
+
+-- SENTENCIAS SQL DE COMPROBACIÓN
+
+
+-- Mostrar los empleados que trabajan en la empresa con CIF 'B2322468R'
+SELECT *
+FROM empleado
+WHERE dni IN (
+    SELECT dni
+    FROM empleado
+    WHERE dni IN (
+        SELECT dni
+        FROM empresa
+        WHERE cif = 'B2322468R'
+    )
+);
+
+-- Despedir a un empleado
+UPDATE contrato
+SET
+    fecha_fin = SYSDATE
+WHERE
+    id_contrato = (
+        SELECT contrato
+        FROM empleado
+        WHERE dni = '46813937H'
+    );
+
+-- Subir el salario de un empleado
+UPDATE contrato
+SET
+    salario = salario + 100
+WHERE
+    id_contrato = (
+        SELECT contrato
+        FROM empleado
+        WHERE dni = '46813937H'
+    );
+
+--
