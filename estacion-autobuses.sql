@@ -569,6 +569,20 @@ INSERT INTO ABONO_FAMILIAR(id_abono, familiar, empleado, descuento) VALUES(9, '3
 
 -- SENTENCIAS SQL DE COMPROBACION
 
+
+-- Mostrar las matriculas de autobuses urbanos que pertenecen a la empresa con CIF 'P2353389X'
+SELECT a.matricula
+FROM AUTOBUS a
+JOIN EMPRESA e ON a.propietario = e.cif
+JOIN AUTOBUS_URBANO au ON a.matricula = au.matricula
+WHERE e.cif = 'P2353389X';
+
+
+-- Cancelar el billete 3
+DELETE FROM BILLETE
+WHERE id_billete = '3';
+
+
 -- Mostrar los buses pertenecientes a la empresa con CIF 'B2322468R'
 SELECT *
 FROM autobus
