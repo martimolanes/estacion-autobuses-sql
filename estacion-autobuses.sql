@@ -2,10 +2,10 @@ SET AUTOCOMMIT on;
 SET SERVEROUTPUT on;
 
 -- drops vistas
-DROP VIEW vista_persona;
-DROP VIEW Pasajeros_menores;
-DROP VIEW vista_info_contrato;
-DROP VIEW vista_ab_normales_disponibles;
+DROP VIEW VISTA_PERSONA;
+DROP VIEW PASAJEROS_MENORES;
+DROP VIEW VISTA_INFO_CONTRATO;
+DROP VIEW VISTA_AB_NORMALES_DISPONIBLES;
 -- drops tables
 DROP TABLE PERSONA CASCADE CONSTRAINTS;
 DROP TABLE TELEFONO CASCADE CONSTRAINTS;
@@ -318,14 +318,14 @@ CREATE INDEX indice_viaje ON viaje(fecha);
 
 /*Vista que muestra la edad*/
 /*Vista actualizable*/
-CREATE OR REPLACE VIEW vista_persona AS
+CREATE OR REPLACE VIEW VISTA_PERSONA AS
    SELECT dni, (nombre || ' ' || apellidos) AS nombre_completo,
    fecha_nacimiento, TRUNC((sysdate - fecha_nacimiento)/365,0) AS edad
 FROM persona;
 
 /*Vista que muestra los pasajeros menores de edad*/
 /*Vista no actualizable*/
-CREATE OR REPLACE VIEW Pasajeros_menores AS
+CREATE OR REPLACE VIEW PASAJEROS_MENORES AS
    SELECT p.dni, p.nombre, p.apellidos, p.fecha_nacimiento
    FROM Persona p
    JOIN Pasajero pa ON p.dni = pa.dni
@@ -333,7 +333,7 @@ CREATE OR REPLACE VIEW Pasajeros_menores AS
    
 /*Vista que muestra la informacion de un contrato y un empleado*/
 /*Vista no actualizable*/
-CREATE  OR REPLACE VIEW vista_info_contrato AS
+CREATE  OR REPLACE VIEW VISTA_INFO_CONTRATO AS
 SELECT e.dni,
    c.id_contrato,
    c.tipo,
@@ -345,7 +345,7 @@ FROM EMPLEADO e JOIN CONTRATO c ON e.CONTRATO = c.ID_CONTRATO JOIN PERSONA p ON 
 
 /*Vista que muestra los abonos normales que aun no cadeucaron y que aun tienen viajes disponibles*/
 /*Vista no actualizable*/
-CREATE  OR REPLACE VIEW vista_ab_normales_disponibles AS
+CREATE  OR REPLACE VIEW VISTA_AB_NORMALES_DISPONIBLES AS
 SELECT a.id_abono,
     a.fecha_contrato,
     a.fecha_caducidad,
@@ -676,7 +676,7 @@ WHERE destino = 'VIGO' and duracion < 120;
 
 -- Mostrar el numero de viajes restantes totales de abonos
 SELECT SUM(viajes_restantes) AS total_viajes_restantes
-FROM VISTA_AB_NORMALES_DISP;
+FROM VISTA_AB_NORMALES_DISPONIBLES;
 
 
 -- Actualizar el conductor de un viaje
