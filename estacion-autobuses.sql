@@ -216,20 +216,21 @@ CREATE TABLE BILLETE(
 
 CREATE TABLE VENTA_BILLETE(
     id_servicio NUMBER NOT NULL,
-    billete NUMBER NOT NULL,
+    billete NUMBER,
     
     PRIMARY KEY (id_servicio),
     FOREIGN KEY (id_servicio) REFERENCES servicio(id_servicio) ON DELETE CASCADE,
-    FOREIGN KEY (billete) REFERENCES billete(id_billete) ON DELETE CASCADE
+    FOREIGN KEY (billete) REFERENCES billete(id_billete) ON DELETE SET NULL
 );
 
 CREATE TABLE BILLETE_COMBINADO(
     id_servicio NUMBER NOT NULL,
     tipo VARCHAR(20) NOT NULL CHECK(tipo IN ('BUS+TREN', 'BUS+AVION', 'BUS+FERRY')),
-    billete NUMBER NOT NULL,
+    billete NUMBER,
     
     PRIMARY KEY (id_servicio),
-    FOREIGN KEY (billete) REFERENCES billete(id_billete) ON DELETE CASCADE
+    FOREIGN KEY (billete) REFERENCES billete(id_billete) ON DELETE SET NULL,
+    FOREIGN KEY (id_servicio) REFERENCES servicio(id_servicio) ON DELETE CASCADE
 );
     
 CREATE TABLE ALQUILER_AUTOBUS(
@@ -320,7 +321,7 @@ CREATE INDEX indice_viaje ON viaje(fecha);
 /*Vista actualizable*/
 CREATE OR REPLACE VIEW vista_persona AS
    SELECT dni, (nombre || ' ' || apellidos) AS nombre_completo,
-   fecha_nacimiento, (sysdate - fecha_nacimiento)/365 AS edad
+   fecha_nacimiento, TRUNC((sysdate - fecha_nacimiento)/365,0) AS edad
 FROM persona;
 
 /*Vista que muestra los pasajeros menores de edad*/
@@ -570,19 +571,6 @@ INSERT INTO ABONO_FAMILIAR(id_abono, familiar, empleado, descuento) VALUES(9, '3
 -- SENTENCIAS SQL DE COMPROBACIÓN
 
 
--- Mostrar los empleados que trabajan en la empresa con CIF 'B2322468R'
-SELECT *
-FROM empleado
-WHERE dni IN (
-    SELECT dni
-    FROM empleado
-    WHERE dni IN (
-        SELECT dni
-        FROM empresa
-        WHERE cif = 'B2322468R'
-    )
-);
-
 -- Despedir a un empleado
 UPDATE contrato
 SET
@@ -605,4 +593,31 @@ WHERE
         WHERE dni = '46813937H'
     );
 
---
+-- Comprobar salario de un empleado
+SELECT salario
+FROM contrato
+WHERE id_contrato = (
+    SELECT contrato
+    FROM empleado
+    WHERE dni = '46813937H'
+);
+
+-- Cambiar el tipo de contrato de un empleado
+UPDATE contrato
+SET
+    tipo = 'INDEFINIDO'
+WHERE
+    id_contrato = (
+        SELECT contrato
+        FROM empleado
+        WHERE dni = '46813937H'
+    );
+
+-- Comprobar tipo de contrato de un empleado
+SELECT tipo
+FROM contrato
+WHERE id_contrato = (
+    SELECT contrato
+    FROM empleado
+    WHERE dni = '46813937H'
+);
