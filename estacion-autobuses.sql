@@ -61,7 +61,7 @@ CREATE TABLE PASAJERO(
     PRIMARY KEY(dni),
     
     FOREIGN KEY (dni) REFERENCES persona(dni) ON DELETE CASCADE,
-    FOREIGN KEY (acompanante) REFERENCES pasajero(dni) ON DELETE CASCADE --si se borra el acompañante tambi�n el pasajero
+    FOREIGN KEY (acompanante) REFERENCES pasajero(dni) ON DELETE CASCADE --si se borra el acompañante también el pasajero
 );
 
 CREATE TABLE CONTRATO(
@@ -199,7 +199,7 @@ CREATE TABLE VIAJE(
 
 CREATE TABLE SERVICIO(
     id_servicio NUMBER NOT NULL CHECK (id_servicio > 0),
-    precio NUMBER(5,2) NOT NULL CHECK (precio > 0),
+    precio NUMBER(8,2) NOT NULL CHECK (precio > 0),
     contratado_por VARCHAR(9),
     
     PRIMARY KEY (id_servicio),
@@ -494,8 +494,8 @@ INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('4', '40,00',
 INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('5', '50,00', '35749531Z');
 INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('6', '60,00', '35674253N');
 INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('7', '7000,00', '46813937H');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('8', '8300,00', '82082351Y');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('9', '90,00', '35537699R');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('8', '8300,00', '59643874T');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('9', '90,00', '35674242X');
 INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('10', '100,00', '35225389S');
 INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('11', '110,00', '59643874T');
 INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('12', '120,00', '25647312F');
