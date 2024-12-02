@@ -24,6 +24,7 @@ DROP TABLE LINEAS_PARADAS CASCADE CONSTRAINTS;
 DROP TABLE AUTOBUS_INTERURBANO CASCADE CONSTRAINTS;
 DROP TABLE RUTA CASCADE CONSTRAINTS;
 DROP TABLE VIAJE CASCADE CONSTRAINTS;
+DROP TABLE PASAJERO_VIAJE CASCADE CONSTRAINTS;
 DROP TABLE SERVICIO CASCADE CONSTRAINTS;
 DROP TABLE BILLETE CASCADE CONSTRAINTS;
 DROP TABLE VENTA_BILLETE CASCADE CONSTRAINTS;
@@ -48,7 +49,7 @@ CREATE TABLE PERSONA(
 
 CREATE TABLE TELEFONO(
     dni VARCHAR(9) NOT NULL,
-    telefono VARCHAR(9) NOT NULL UNIQUE CHECK (REGEXP_LIKE (telefono, '^[0-9]{9}$')),
+    telefono VARCHAR(14) NOT NULL UNIQUE CHECK (REGEXP_LIKE (telefono, '^([+]\d{1,3})?\s?[0-9]{9}$')),
     
     PRIMARY KEY (dni, telefono),
     FOREIGN KEY (dni) REFERENCES persona(dni) ON DELETE CASCADE
@@ -116,7 +117,7 @@ CREATE TABLE EMPRESA(
     cif VARCHAR(9) NOT NULL CHECK (REGEXP_LIKE(cif, '^[A-Z][0-9]{7}[A-Z]$')),
     nombre VARCHAR(30) NOT NULL UNIQUE CHECK (LENGTH(nombre) > 0),
     direccion VARCHAR(60) NOT NULL CHECK (LENGTH(direccion) > 0),
-    telefono VARCHAR(9) NOT NULL CHECK (REGEXP_LIKE(telefono, '^[0-9]{9}$')),
+    telefono VARCHAR(14) NOT NULL UNIQUE CHECK (REGEXP_LIKE (telefono, '^([+]\d{1,3})?\s?[0-9]{9}$')),
     
     PRIMARY KEY (cif)
 );
@@ -145,6 +146,7 @@ CREATE TABLE AUTOBUS_URBANO(
     linea NUMBER NOT NULL,
     
     PRIMARY KEY (matricula),
+    FOREIGN KEY (matricula) REFERENCES autobus(matricula) ON DELETE CASCADE,
     FOREIGN KEY (linea) REFERENCES linea(num_linea) ON DELETE CASCADE
 );
 
@@ -196,10 +198,20 @@ CREATE TABLE VIAJE(
     FOREIGN KEY (autobus) REFERENCES autobus(matricula) ON DELETE SET NULL
 );
 
+CREATE TABLE PASAJERO_VIAJE(
+    id_viaje NUMBER NOT NULL,
+    dni VARCHAR(9) NOT NULL,
+
+    PRIMARY KEY (id_viaje, dni),
+    FOREIGN KEY (id_viaje) REFERENCES viaje(id_viaje) ON DELETE CASCADE,
+    FOREIGN KEY (dni) REFERENCES pasajero(dni) ON DELETE CASCADE
+);
+
 CREATE TABLE SERVICIO(
     id_servicio NUMBER NOT NULL CHECK (id_servicio > 0),
     precio NUMBER(8,2) NOT NULL CHECK (precio > 0),
     contratado_por VARCHAR(9),
+    fecha DATE NOT NULL,
     
     PRIMARY KEY (id_servicio),
     FOREIGN KEY (contratado_por) REFERENCES pasajero(dni) ON DELETE SET NULL
@@ -302,16 +314,20 @@ CREATE TABLE ABONO_FAMILIAR(
 
 -- Sentencias de Creacion de Indices
 
-/*Indice para buscar de manera mas rapida a una persona, filtrando primero por nombre y despues por apellido*/
+/* Indice compuesto para optimizar consultas que filtren registros en la tabla 'persona', 
+   priorizando busquedas por 'nombre' seguido de 'apellidos', aprovechando el acceso rapido mediante indice en filtros WHERE */ 
 CREATE INDEX indice_persona ON persona(nombre, apellidos);
 
-/*Indice para buscar contratos por la fecha de inicio*/
+/* Indice sobre la columna 'fecha_inicio' para acelerar las consultas que filtran o clasifican 
+    registros de la tabla 'contrato', mejorando el rendimiento de busquedas basadas en rangos de fechas o comparaciones en filtros WHERE. */
 CREATE INDEX indice_contrato ON contrato(fecha_inicio);
 
-/*Indice para buscar abonos por la fecha de contrato*/
+/* Indice en la columna 'fecha_contrato' para optimizar el acceso a los registros en la tabla 'abono' que dependen de la fecha del contrato, 
+    especialmente util en consultas que involucren agrupacion o filtrado por fecha. */
 CREATE INDEX indice_abono ON abono(fecha_contrato);
 
-/*Indice para buscar un viaje por fecha*/
+/* Indice sobre la columna 'fecha' en la tabla 'viaje', creado para mejorar el tiempo de respuesta de consultas que busquen o filtren viajes 
+    por fechas especificas o rangos de fechas, evitando full table scans. */ 
 CREATE INDEX indice_viaje ON viaje(fecha);
 
 -- Sentencias para la creacion de vistas
@@ -343,7 +359,7 @@ SELECT e.dni,
    c.fecha_fin
 FROM EMPLEADO e JOIN CONTRATO c ON e.CONTRATO = c.ID_CONTRATO JOIN PERSONA p ON e.dni= p.dni;
 
-/*Vista que muestra los abonos normales que aun no cadeucaron y que aun tienen viajes disponibles*/
+/*Vista que muestra los abonos normales que aun no caducaron y que aun tienen viajes disponibles*/
 /*Vista no actualizable*/
 CREATE  OR REPLACE VIEW VISTA_AB_NORMALES_DISPONIBLES AS
 SELECT a.id_abono,
@@ -486,24 +502,30 @@ INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('1', TO_DAT
 INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('2', TO_DATE('04/10/2020', 'DD/MM/YYYY'),'1','35537699R','3060RTX');
 INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('3', TO_DATE('28/07/2023', 'DD/MM/YYYY'),'2','82082351Y','6754BDI');
 
+-- tabla PASAJERO_VIAJE
+INSERT INTO PASAJERO_VIAJE(id_viaje, dni) VALUES ('1', '35225389S');
+INSERT INTO PASAJERO_VIAJE(id_viaje, dni) VALUES ('1', '25647312F');
+INSERT INTO PASAJERO_VIAJE(id_viaje, dni) VALUES ('2', '35225389S');
+INSERT INTO PASAJERO_VIAJE(id_viaje, dni) VALUES ('3', '46813937H');
+
 -- tabla SERVICIO
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('1', '0,50', '35225389S');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('2', '0,70', '59643874T');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('3', '3,10', '25647312F');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('4', '40,00', '35674242X');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('5', '50,00', '35749531Z');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('6', '60,00', '35674253N');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('7', '7000,00', '46813937H');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('8', '8300,00', '59643874T');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('9', '90,00', '35674242X');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('10', '100,00', '35225389S');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('11', '110,00', '59643874T');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('12', '120,00', '25647312F');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('13', '130,00', '35674242X');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('14', '140,00', '35749531Z');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('15', '150,00', '35674253N');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('16', '160,00', '46813937H');
-INSERT INTO SERVICIO (id_servicio, precio, contratado_por) VALUES ('17', '170,00', '35225389S');
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('1', '0,50', '35225389S', TO_DATE('14/01/2017', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('2', '0,70', '59643874T', TO_DATE('03/10/2010', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('3', '3,10', '25647312F', TO_DATE('17/08/2015', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('4', '40,00', '35674242X', TO_DATE('12/12/2020', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('5', '50,00', '35749531Z', TO_DATE('04/03/2021', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('6', '60,00', '35674253N', TO_DATE('10/06/2019', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('7', '7000,00', '46813937H', TO_DATE('22/05/2015', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('8', '8300,00', '59643874T', TO_DATE('24/11/2019', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('9', '90,00', '35674242X', TO_DATE('30/08/2020', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('10', '100,00', '35225389S', TO_DATE('03/09/2015', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('11', '110,00', '59643874T', TO_DATE('09/11/2022', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('12', '120,00', '25647312F', TO_DATE('10/06/2022', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('13', '130,00', '35674242X', TO_DATE('16/01/2019', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('14', '140,00', '35749531Z', TO_DATE('10/06/2011', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('15', '150,00', '35674253N', TO_DATE('19/07/2018', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('16', '160,00', '46813937H', TO_DATE('11/10/2019', 'DD/MM/YYYY'));
+INSERT INTO SERVICIO (id_servicio, precio, contratado_por, fecha) VALUES ('17', '170,00', '35225389S', TO_DATE('05/06/2020', 'DD/MM/YYYY'));
 
 -- tabla BILLETE
 INSERT INTO BILLETE (id_billete, viaje) VALUES ('1', '1');
@@ -714,3 +736,5 @@ WHERE empleado = '35674253N';
 SELECT *
 FROM ABONO_FAMILIAR
 WHERE empleado = '35674253N';
+
+-- PROCEDIMIENTOS Y FUNCIONES PL/SQL
