@@ -769,44 +769,42 @@ END ActualizarSalarios;
 SHOW ERRORS;
 
 CREATE OR REPLACE
-FUNCTION IngresosPorViaje(p_destino IN VARCHAR2)
-RETURN NUMBER
+PROCEDURE RenovarAbonoIlimitado(p_id_abono IN NUMBER, p_nueva_fecha IN DATE)
 IS
-   CURSOR c_ingresos IS
-      SELECT SUM(precio) AS total
-      FROM RESERVA R
-      JOIN VIAJE V ON R.destino = V.destino
-      WHERE R.destino = p_destino;
-   v_total NUMBER := 0;
+    v_fecha_actual DATE;
+    v_es_abono_ilimitado NUMBER;
 BEGIN
-   OPEN c_ingresos;
-   FETCH c_ingresos INTO v_total;
-   CLOSE c_ingresos;
+    IF p_nueva_fecha IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20000, 'La nueva fecha de caducidad no puede ser nula.');
+    END IF;
 
-   RETURN v_total;
-EXCEPTION
-   WHEN OTHERS THEN
-      DBMS_OUTPUT.PUT_LINE('[ERROR]: ' || SQLERRM);
-      RAISE;
-END IngresosPorDestino;
-/
-SHOW ERRORS;
+    BEGIN
+        SELECT fecha_contrato INTO v_fecha_actual
+        FROM ABONO
+        WHERE id_abono = p_id_abono;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE_APPLICATION_ERROR(-20001, 'El abono especificado no existe.');
+    END;
 
-CREATE OR REPLACE
-PROCEDURE RenovarAbonoIlimitado(p_id_abono IN NUMBER, p_nueva_fecha DATE)
-IS
-   CURSOR c_abonos IS
-      SELECT id_abono, fecha_contrato, fecha_caducidad
-      FROM 
-BEGIN
-   FOR reg_abono IN c_abonos LOOP
-      UPDATE abono_ilimitado
-      SET fecha_caducidad = p_nueva_fecha
-      WHERE CURRENT OF c_abonos;
-   END LOOP;
-
-   DBMS_OUTPUT.PUT_LINE('Abono ilimitado actualizado correctamente.');
-   COMMIT;
+    IF p_nueva_fecha <= v_fecha_actual THEN
+        RAISE_APPLICATION_ERROR(-20001, 'La nueva fecha de caducidad debe ser posterior a la fecha actual.');
+    END IF;
+    
+    -- Comprobar si el abono es ilimitado
+    SELECT COUNT(*) INTO v_es_abono_ilimitado
+    FROM ABONO_ILIMITADO
+    WHERE id_abono = p_id_abono;
+    
+    IF v_es_abono_ilimitado > 0 THEN
+        UPDATE ABONO
+        SET fecha_caducidad = p_nueva_fecha
+        WHERE id_abono = p_id_abono;
+        DBMS_OUTPUT.PUT_LINE('Abono ilimitado renovado correctamente.');
+        COMMIT;
+    ELSE
+        RAISE_APPLICATION_ERROR(-20002, 'El abono especificado no es ilimitado.');
+    END IF;
 EXCEPTION
    WHEN OTHERS THEN
       DBMS_OUTPUT.PUT_LINE('[ERROR]: ' || SQLERRM);
@@ -822,30 +820,33 @@ END RenovarAbonoIlimitado;
 SET SERVEROUTPUT ON;
 
 DECLARE
-   totalPasajeros NUMBER;
-   ingresos NUMBER;
-   sumaSalarios NUMBER;
 BEGIN
-    DBMS_OUTPUT.NEW_LINE;
 
     -- Actualizar Salarios
+
     BEGIN
         DBMS_OUTPUT.PUT_LINE('==== Ejecutando ActualizarSalarios ====');
         ActualizarSalarios(100); -- Incremento de 100
-        EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('[ERROR en ActualizarSalarios]: ' || SQLERRM);
+        DBMS_OUTPUT.PUT_LINE('Salarios actualizados correctamente.');
+        DBMS_OUTPUT.NEW_LINE;
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
    END;
-
-    DBMS_OUTPUT.NEW_LINE;
 
     -- Actualizar Abono Ilimitado
     BEGIN
         DBMS_OUTPUT.PUT_LINE('==== Ejecutando RenovarAbonoIlimitado ====');
         RenovarAbonoIlimitado(5, TO_DATE('31/12/2025', 'DD/MM/YYYY')); -- Nueva fecha de caducidad
-        EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('[ERROR en RenovarAbonoIlimitado]: ' || SQLERRM);
-
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+    END;
 END;
 /
+
+
