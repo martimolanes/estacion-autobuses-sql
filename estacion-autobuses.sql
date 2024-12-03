@@ -938,12 +938,43 @@ END obtenerConductoresMasViajes;
 /
 SHOW ERRORS;
 
+CREATE OR REPLACE 
+FUNCTION TotalAbonosVendidos
+RETURN NUMBER
+IS
+CURSOR c_abonos IS
+SELECT abonos_vendidos
+FROM EMPLEADO_ESTACION;
+
+totalAbonos NUMBER := 0;
+v_abono NUMBER;
+BEGIN
+    -- Abrir y recorrer el cursor
+    OPEN c_abonos;
+    LOOP
+    FETCH c_abonos INTO v_abono;
+    EXIT WHEN c_abonos%NOTFOUND; -- Salir cuando no haya más filas
+    
+    totalAbonos := totalAbonos + NVL(v_abono, 0); -- Sumar cada abono al total
+        END LOOP;
+    CLOSE c_abonos;
+    
+    RETURN totalAbonos;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Error desconocido: ' || SQLERRM);
+END TotalAbonosVendidos;
+/
+SHOW ERRORS;
+
 /********************************************************/
 /* 9.- Bloque para prueba de Procedimientos y Funciones */
 /********************************************************/
 
 SET SERVEROUTPUT ON;
 
+DECLARE
+    totalAbonos NUMBER;
 BEGIN
 
     -- Actualizar Salarios
@@ -975,6 +1006,11 @@ BEGIN
     BEGIN
         DBMS_OUTPUT.PUT_LINE('==== Ejecutando esEmpleado ====');
         esEmpleado('46813937H');
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
     END;
 
     -- Obtener conductores con minimo de viajes
@@ -982,7 +1018,25 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE('INICIO PROCEDIMIENTO: obtenerConductoresMasViajes');
         obtenerConductoresMasViajes(0);
         DBMS_OUTPUT.NEW_LINE;
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
     END;
+
+    -- Total de abonos vendidos
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('==== Ejecutando TotalAbonosVendidos ====');
+        totalAbonos := TotalAbonosVendidos; -- Asignar el valor retornado
+        DBMS_OUTPUT.PUT_LINE('Total de abonos vendidos: ' || totalAbonos);
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+    END;
+
 END;
 /
 
