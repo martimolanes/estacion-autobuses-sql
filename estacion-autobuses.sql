@@ -771,46 +771,114 @@ SHOW ERRORS;
 CREATE OR REPLACE
 PROCEDURE RenovarAbonoIlimitado(p_id_abono IN NUMBER, p_nueva_fecha IN DATE)
 IS
-    v_fecha_actual DATE;
+    -- Declaración de cursores
+    CURSOR c_abono IS 
+        SELECT fecha_contrato 
+        FROM ABONO 
+        WHERE id_abono = p_id_abono;
+    
+    CURSOR c_abono_ilimitado IS
+        SELECT COUNT(*) AS contador
+        FROM ABONO_ILIMITADO 
+        WHERE id_abono = p_id_abono;
+    
+    -- Variables para almacenar datos de los cursores
+    v_fecha_contrato DATE;
     v_es_abono_ilimitado NUMBER;
+    v_contador NUMBER;
 BEGIN
+    -- Validar que la fecha no sea nula
     IF p_nueva_fecha IS NULL THEN
         RAISE_APPLICATION_ERROR(-20000, 'La nueva fecha de caducidad no puede ser nula.');
     END IF;
 
+    -- Abrir y recuperar la fecha de contrato
+    OPEN c_abono;
+    FETCH c_abono INTO v_fecha_contrato;
+    
+    -- Verificar si el abono existe
+    IF c_abono%NOTFOUND THEN
+        CLOSE c_abono;
+        RAISE_APPLICATION_ERROR(-20001, 'El abono especificado no existe.');
+    END IF;
+    CLOSE c_abono;
+
+    -- Validar que la nueva fecha sea posterior a la fecha de contrato
+    IF p_nueva_fecha <= v_fecha_contrato THEN
+        RAISE_APPLICATION_ERROR(-20002, 'La nueva fecha de caducidad debe ser posterior a la fecha de contrato.');
+    END IF;
+    
+    -- Verificar si es un abono ilimitado usando cursor
+    OPEN c_abono_ilimitado;
+    FETCH c_abono_ilimitado INTO v_contador;
+    
+    -- Verificar si es un abono ilimitado
+    IF v_contador = 0 THEN
+        CLOSE c_abono_ilimitado;
+        RAISE_APPLICATION_ERROR(-20003, 'El abono especificado no es ilimitado.');
+    END IF;
+    CLOSE c_abono_ilimitado;
+
+    -- Actualizar la fecha de caducidad
+    UPDATE ABONO
+    SET fecha_caducidad = p_nueva_fecha
+    WHERE id_abono = p_id_abono;
+
+    -- Verificar que la actualización se realizó
+    IF SQL%ROWCOUNT = 0 THEN
+        RAISE_APPLICATION_ERROR(-20004, 'No se pudo actualizar la fecha de caducidad.');
+    END IF;
+
+    -- Confirmar la transacción
+    DBMS_OUTPUT.PUT_LINE('Abono ilimitado renovado correctamente.');
+    COMMIT;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('[ERROR]: ' || SQLERRM);
+        ROLLBACK;
+        RAISE;
+END RenovarAbonoIlimitado;
+/
+
+CREATE OR REPLACE FUNCTION esEmpleado(dniPersona IN VARCHAR)
+RETURN BOOLEAN
+IS
+    -- Variable para almacenar el DNI de la persona
+    dniPer  PERSONA.dni%TYPE;
+    
+    -- Excepción personalizada
+    personaNoExisteException EXCEPTION;
+    PRAGMA EXCEPTION_INIT(personaNoExisteException, -20001);
+    
+BEGIN
+    -- Comprobamos si el DNI existe en la tabla Persona
+    SELECT dni INTO dniPer
+    FROM Persona
+    WHERE dni = dniPersona;
+    
+    -- Si la persona existe, verificamos si está en la tabla Empleado
     BEGIN
-        SELECT fecha_contrato INTO v_fecha_actual
-        FROM ABONO
-        WHERE id_abono = p_id_abono;
+        -- Intentamos obtener el DNI en la tabla Empleado
+        SELECT dni INTO dniPer
+        FROM Empleado
+        WHERE dni = dniPersona;
+        
+        DBMS_OUTPUT.PUT_LINE('Esta persona es Empleado.');
+        RETURN TRUE;
+        
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            RAISE_APPLICATION_ERROR(-20001, 'El abono especificado no existe.');
+            -- Si no esta en la tabla Empleado
+            DBMS_OUTPUT.PUT_LINE('Esta persona NO es Empleado.');
+            RETURN FALSE;
     END;
-
-    IF p_nueva_fecha <= v_fecha_actual THEN
-        RAISE_APPLICATION_ERROR(-20001, 'La nueva fecha de caducidad debe ser posterior a la fecha actual.');
-    END IF;
     
-    -- Comprobar si el abono es ilimitado
-    SELECT COUNT(*) INTO v_es_abono_ilimitado
-    FROM ABONO_ILIMITADO
-    WHERE id_abono = p_id_abono;
-    
-    IF v_es_abono_ilimitado > 0 THEN
-        UPDATE ABONO
-        SET fecha_caducidad = p_nueva_fecha
-        WHERE id_abono = p_id_abono;
-        DBMS_OUTPUT.PUT_LINE('Abono ilimitado renovado correctamente.');
-        COMMIT;
-    ELSE
-        RAISE_APPLICATION_ERROR(-20002, 'El abono especificado no es ilimitado.');
-    END IF;
 EXCEPTION
-   WHEN OTHERS THEN
-      DBMS_OUTPUT.PUT_LINE('[ERROR]: ' || SQLERRM);
-      ROLLBACK;
-      RAISE;
-END RenovarAbonoIlimitado;
+    WHEN NO_DATA_FOUND THEN
+        -- Si no esta en la tabla Persona
+        RAISE_APPLICATION_ERROR(-20001, 'Esta persona NO existe.');
+END;
 /
 
 /********************************************************/
