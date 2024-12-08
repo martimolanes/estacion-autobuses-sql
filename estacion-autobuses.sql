@@ -37,6 +37,13 @@ DROP TABLE ABONO_ILIMITADO CASCADE CONSTRAINTS;
 DROP TABLE ABONO_EMPLEADO CASCADE CONSTRAINTS;
 DROP TABLE ABONO_FAMILIAR CASCADE CONSTRAINTS;
 
+-- drops procedimientos y funciones
+DROP PROCEDURE ACTUALIZARSALARIOS;
+DROP PROCEDURE RENOVARABONOILIMITADO;
+DROP PROCEDURE ESEMPLEADO;
+DROP PROCEDURE OBTENERCONDUCTORESMASVIAJES;
+DROP FUNCTION TOTALABONOSVENDIDOS;
+
 --Sentencias de creacion de tablas
 CREATE TABLE PERSONA(
     dni VARCHAR(9) NOT NULL CHECK (REGEXP_LIKE (dni, '^[0-9]{8}[A-Z]$')),
@@ -740,20 +747,20 @@ WHERE empleado = '35674253N';
 -- PROCEDIMIENTOS Y FUNCIONES PL/SQL
 
 CREATE OR REPLACE
-PROCEDURE ActualizarSalarios(p_incremento IN NUMBER)
+PROCEDURE ActualizarSalarios(incremento IN NUMBER)
 IS
    CURSOR c_contratos IS
       SELECT salario
       FROM CONTRATO
       FOR UPDATE;
 BEGIN
-   IF p_incremento <= 0 THEN
+   IF incremento <= 0 THEN
       RAISE_APPLICATION_ERROR(-20000, 'El incremento debe ser mayor que 0.');
    END IF;
 
    FOR reg_contrato IN c_contratos LOOP
       UPDATE CONTRATO
-      SET salario = salario + p_incremento
+      SET salario = salario + incremento
       WHERE CURRENT OF c_contratos;
    END LOOP;
 
@@ -769,24 +776,24 @@ END ActualizarSalarios;
 SHOW ERRORS;
 
 CREATE OR REPLACE
-PROCEDURE RenovarAbonoIlimitado(p_id_abono IN NUMBER, p_nueva_fecha IN DATE)
+PROCEDURE RenovarAbonoIlimitado(abono_id IN NUMBER, nueva_fecha IN DATE)
 IS
     -- Declaración de cursores
     CURSOR c_abono IS 
         SELECT fecha_contrato 
         FROM ABONO 
-        WHERE id_abono = p_id_abono;
+        WHERE id_abono = abono_id;
 
     CURSOR c_abono_ilimitado IS
         SELECT COUNT(*) AS contador
         FROM ABONO_ILIMITADO 
-        WHERE id_abono = p_id_abono;
+        WHERE id_abono = abono_id;
 
     -- Variables para almacenar datos de los cursores
     v_fecha_contrato DATE;
     v_contador NUMBER;
 BEGIN
-    IF p_nueva_fecha IS NULL THEN
+    IF nueva_fecha IS NULL THEN
         RAISE_APPLICATION_ERROR(-20000, 'La nueva fecha de caducidad no puede ser nula.');
     END IF;
 
@@ -801,7 +808,7 @@ BEGIN
     END IF;
     CLOSE c_abono;
 
-    IF p_nueva_fecha <= v_fecha_contrato THEN
+    IF nueva_fecha <= v_fecha_contrato THEN
         RAISE_APPLICATION_ERROR(-20002, 'La nueva fecha de caducidad debe ser posterior a la fecha de contrato.');
     END IF;
 
@@ -818,8 +825,8 @@ BEGIN
 
     -- Actualizar la fecha de caducidad
     UPDATE ABONO
-    SET fecha_caducidad = p_nueva_fecha
-    WHERE id_abono = p_id_abono;
+    SET fecha_caducidad = nueva_fecha
+    WHERE id_abono = abono_id;
 
     -- Verificar que la actualización se realizó
     IF SQL%ROWCOUNT = 0 THEN
@@ -839,19 +846,19 @@ END RenovarAbonoIlimitado;
 SHOW ERRORS;
 
 -- Función que comprueba si una Persona es de tipo Empleado.
-CREATE OR REPLACE PROCEDURE esEmpleado(dniPersona IN VARCHAR)
+CREATE OR REPLACE PROCEDURE EsEmpleado(dniPersona IN VARCHAR)
 IS
     -- Variable para almacenar el DNI
     dniPer Persona.dni%TYPE;
     
     -- cursor para ver existe en la tabla Persona
-    CURSOR curPersona IS
+    CURSOR c_persona IS
         SELECT dni
         FROM Persona
         WHERE dni = dniPersona;
     
     -- cursor para ver si existe en la tabla Empleado
-    CURSOR curEmpleado IS
+    CURSOR c_Empleado IS
         SELECT dni
         FROM Empleado
         WHERE dni = dniPersona;
@@ -862,28 +869,28 @@ IS
     
 BEGIN
     -- Usamos el cursor para ver si DNI esta en Persona
-    OPEN curPersona;
-    FETCH curPersona INTO dniPer;
+    OPEN c_persona;
+    FETCH c_persona INTO dniPer;
 
-    IF curPersona%FOUND THEN
+    IF c_persona%FOUND THEN
         -- Si se encuentra
-        OPEN curEmpleado;
-        FETCH curEmpleado INTO dniPer;
+        OPEN c_Empleado;
+        FETCH c_Empleado INTO dniPer;
         
-        IF curEmpleado%FOUND THEN
+        IF c_Empleado%FOUND THEN
             -- Si encontramos el DNI en ambas tablas
             DBMS_OUTPUT.PUT_LINE( dniPersona || ' es un Empleado.');
-            CLOSE curEmpleado;
-            CLOSE curPersona;
+            CLOSE c_Empleado;
+            CLOSE c_persona;
         ELSE
             -- Si no se encuentra en Empleado
             DBMS_OUTPUT.PUT_LINE( dniPersona || ' NO es un Empleado.');
-            CLOSE curEmpleado;
-            CLOSE curPersona;
+            CLOSE c_Empleado;
+            CLOSE c_persona;
         END IF;
     ELSE
         -- Si no se encuentra el DNI en Persona
-        CLOSE curPersona;
+        CLOSE c_persona;
         RAISE_APPLICATION_ERROR(-20001, 'Esa persona NO existe.');
     END IF;
     
@@ -891,78 +898,79 @@ END;
 /
 SHOW ERRORS;
 
-CREATE OR REPLACE PROCEDURE obtenerConductoresMasViajes(min_viajes IN NUMBER)
+CREATE OR REPLACE PROCEDURE ObtenerConductoresMasViajes(num_viajes IN NUMBER)
 IS
     regCond CONDUCTOR%ROWTYPE;
     NO_CONDUCTORES_EXCEPTION EXCEPTION;
     conductoresCount NUMBER;
 
-    CURSOR C_COND IS
+    CURSOR c_cond IS
         SELECT c.dni, c.num_licencia
             FROM CONDUCTOR c
             WHERE c.dni IN (
                 SELECT conductor
                 FROM VIAJE
                 GROUP BY conductor
-                HAVING COUNT(*) > min_viajes
+                HAVING COUNT(*) > num_viajes
             );
 BEGIN
-    IF min_viajes < 0 THEN
+    IF num_viajes < 0 THEN
         RAISE_APPLICATION_ERROR(-20000, 'El numero de viajes no puede ser negativo');
     END IF;
 
-    OPEN C_COND;
-    DBMS_OUTPUT.PUT_LINE('Lista de conductores con mas de '|| min_viajes || ' viajes');
+    OPEN c_cond;
+    DBMS_OUTPUT.PUT_LINE('Lista de conductores con mas de '|| num_viajes || ' viajes');
     LOOP
-        FETCH C_COND INTO regCond;
-        EXIT WHEN C_COND%NOTFOUND;
+        FETCH c_cond INTO regCond;
+        EXIT WHEN c_cond%NOTFOUND;
         DBMS_OUTPUT.PUT('DNI: ' || regCond.dni || '. Licencia: ' || regCond.num_licencia);
         DBMS_OUTPUT.PUT_LINE('');
     END LOOP;
 
-    conductoresCount := C_COND%ROWCOUNT;
+    conductoresCount := c_cond%ROWCOUNT;
     IF(conductoresCount = 0) THEN
         RAISE NO_CONDUCTORES_EXCEPTION;
     END IF;
-    CLOSE C_COND;
+    CLOSE c_cond;
 
 EXCEPTION
     WHEN NO_CONDUCTORES_EXCEPTION THEN
-        CLOSE C_COND;
-        RAISE_APPLICATION_ERROR(-20001, 'No hay conductores con mas de ' || min_viajes || ' viajes.');
+        CLOSE c_cond;
+        RAISE_APPLICATION_ERROR(-20001, 'No hay conductores con mas de ' || num_viajes || ' viajes.');
     WHEN OTHERS THEN
-        CLOSE C_COND;
-        RAISE;
+        CLOSE c_cond;
+        RAISE_APPLICATION_ERROR(-20002, 'Error desconocido: ' || SQLERRM);
     
-END obtenerConductoresMasViajes;
+END ObtenerConductoresMasViajes;
 /
 SHOW ERRORS;
 
-CREATE OR REPLACE 
-FUNCTION TotalAbonosVendidos
-RETURN NUMBER
-IS
-CURSOR c_abonos IS
-SELECT abonos_vendidos
-FROM EMPLEADO_ESTACION;
+CREATE OR REPLACE FUNCTION TotalAbonosVendidos
+    RETURN NUMBER
+    IS
+    CURSOR c_abonos IS
+        SELECT abonos_vendidos
+        FROM EMPLEADO_ESTACION;
 
-totalAbonos NUMBER := 0;
-v_abono NUMBER;
+    totalAbonos NUMBER := 0;
+    v_abono NUMBER;
 BEGIN
     -- Abrir y recorrer el cursor
     OPEN c_abonos;
     LOOP
-    FETCH c_abonos INTO v_abono;
-    EXIT WHEN c_abonos%NOTFOUND; -- Salir cuando no haya más filas
+        FETCH c_abonos INTO v_abono;
+        EXIT WHEN c_abonos%NOTFOUND; -- Salir cuando no haya más filas
     
-    totalAbonos := totalAbonos + NVL(v_abono, 0); -- Sumar cada abono al total
-        END LOOP;
+        totalAbonos := totalAbonos + NVL(v_abono, 0); -- Sumar cada abono al total
+    END LOOP;
+    
     CLOSE c_abonos;
     
     RETURN totalAbonos;
 EXCEPTION
     WHEN OTHERS THEN
         RAISE_APPLICATION_ERROR(-20002, 'Error desconocido: ' || SQLERRM);
+        
 END TotalAbonosVendidos;
 /
 SHOW ERRORS;
@@ -970,8 +978,6 @@ SHOW ERRORS;
 /********************************************************/
 /* 9.- Bloque para prueba de Procedimientos y Funciones */
 /********************************************************/
-
-SET SERVEROUTPUT ON;
 
 DECLARE
     totalAbonos NUMBER;
@@ -1004,7 +1010,7 @@ BEGIN
 
     -- Comprobar si una persona es empleado
     BEGIN
-        DBMS_OUTPUT.PUT_LINE('==== Ejecutando esEmpleado ====');
+        DBMS_OUTPUT.PUT_LINE('==== Ejecutando EsEmpleado ====');
         esEmpleado('46813937H');
     EXCEPTION
         WHEN OTHERS THEN
@@ -1015,7 +1021,7 @@ BEGIN
 
     -- Obtener conductores con minimo de viajes
     BEGIN
-        DBMS_OUTPUT.PUT_LINE('INICIO PROCEDIMIENTO: obtenerConductoresMasViajes');
+        DBMS_OUTPUT.PUT_LINE('==== Ejecutando ObtenerConductoresMasViajes ====');
         obtenerConductoresMasViajes(0);
         DBMS_OUTPUT.NEW_LINE;
     EXCEPTION
@@ -1039,5 +1045,3 @@ BEGIN
 
 END;
 /
-
-
