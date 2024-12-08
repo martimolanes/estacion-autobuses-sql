@@ -43,6 +43,7 @@ DROP PROCEDURE RENOVARABONOILIMITADO;
 DROP PROCEDURE ESEMPLEADO;
 DROP PROCEDURE OBTENERCONDUCTORESMASVIAJES;
 DROP FUNCTION TOTALABONOSVENDIDOS;
+DROP FUNCTION DETALLESLINEAAUTOBUSURBANO;
 
 --Sentencias de creacion de tablas
 CREATE TABLE PERSONA(
@@ -449,7 +450,7 @@ INSERT INTO AUTOBUS (matricula, num_asientos, modelo, fecha_itv, propietario) VA
 
 -- tabla LINEA
 INSERT INTO LINEA (num_linea, descripcion) VALUES ('1', 'San Lazaro - Residencia');
-INSERT INTO LINEA (num_linea, descripcion) VALUES ('2', 'Alameda - Curros Enriquez');
+INSERT INTO LINEA (num_linea, descripcion) VALUES ('2', 'Alameda - Campus As Lagoas');
 INSERT INTO LINEA (num_linea, descripcion) VALUES ('3', 'O Cumial- Seixalvo');
 INSERT INTO LINEA (num_linea, descripcion) VALUES ('4', 'Tanatorio - Sainza');
 INSERT INTO LINEA (num_linea, descripcion) VALUES ('5', 'Covadonga - Quintela');
@@ -470,15 +471,21 @@ INSERT INTO PARADA (cod_parada, direccion) VALUES ('2', 'AVENIDA DE MARIN');
 INSERT INTO PARADA (cod_parada, direccion) VALUES ('3', 'PARQUE DE SAN LAZARO');
 INSERT INTO PARADA (cod_parada, direccion) VALUES ('4', 'XARDIN DO POSIO');
 INSERT INTO PARADA (cod_parada, direccion) VALUES ('5', 'AVENIDA DE SANTIAGO');
+INSERT INTO PARADA (cod_parada, direccion) VALUES ('6', 'RUA DO PROGRESO');
+INSERT INTO PARADA (cod_parada, direccion) VALUES ('7', 'RUA XOAN XXIII');
+INSERT INTO PARADA (cod_parada, direccion) VALUES ('8', 'RUA ANGEL BARJA');
+INSERT INTO PARADA (cod_parada, direccion) VALUES ('9', 'RUA DOUTOR TERMES');
 
 -- tabla LINEAS_PARADAS
 INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '2', '1');
 INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '1', '2');
 INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '3', '3');
 
-INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('2', '3', '1');
-INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('2', '1', '2');
-INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('2', '2', '3');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('2', '6', '1');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('2', '7', '2');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('2', '1', '3');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('2', '8', '4');
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('2', '9', '5');
 
 INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('3', '1', '1');
 INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('3', '2', '2');
@@ -975,30 +982,76 @@ END TotalAbonosVendidos;
 /
 SHOW ERRORS;
 
+-- Detalles de la ruta de una línea de un bus urbano
+CREATE OR REPLACE FUNCTION DetallesLineaAutobusUrbano(nlinea IN NUMBER)
+    RETURN VARCHAR2
+IS
+    CURSOR c_paradas IS
+        SELECT p.direccion
+        FROM PARADA p
+        JOIN LINEAS_PARADAS lp ON p.cod_parada = lp.parada
+        WHERE lp.linea = nlinea
+        ORDER BY lp.orden;
+
+    CURSOR c_linea IS
+        SELECT descripcion
+        FROM LINEA
+        WHERE num_linea = nlinea;
+
+    v_parada VARCHAR2(400);
+    line_description VARCHAR2(40);
+
+    ruta VARCHAR2(4000) := 'Paradas de la línea ' || nlinea;
+BEGIN
+
+    OPEN c_linea;
+    FETCH c_linea INTO line_description;
+    CLOSE c_linea;
+
+    ruta := ruta || ' (' || line_description || '): ';
+
+    OPEN c_paradas;
+    LOOP
+        FETCH c_paradas INTO v_parada;
+        EXIT WHEN c_paradas%NOTFOUND;
+
+        ruta := ruta || v_parada || ', ';
+    END LOOP;
+
+    CLOSE c_paradas;
+
+    RETURN SUBSTR(ruta, 1, LENGTH(ruta) - 2); -- Eliminar la última coma y espacio
+END DetallesLineaAutobusUrbano;
+/
+SHOW ERRORS;
+
 /********************************************************/
 /* 9.- Bloque para prueba de Procedimientos y Funciones */
 /********************************************************/
 
 DECLARE
     totalAbonos NUMBER;
+    lineaDetalles VARCHAR2(4000);
 BEGIN
+    DBMS_OUTPUT.NEW_LINE;
+    DBMS_OUTPUT.PUT_LINE('==== Pruebas de Procedimientos y Funciones ====');
+    DBMS_OUTPUT.NEW_LINE;
 
     -- Actualizar Salarios
-
     BEGIN
         DBMS_OUTPUT.PUT_LINE('==== Ejecutando ActualizarSalarios ====');
         ActualizarSalarios(100); -- Incremento de 100
         DBMS_OUTPUT.PUT_LINE('Salarios actualizados correctamente.');
-        DBMS_OUTPUT.NEW_LINE;
     EXCEPTION
         WHEN OTHERS THEN
             DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
             DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
-                DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
    END;
 
     -- Actualizar Abono Ilimitado
     BEGIN
+        DBMS_OUTPUT.NEW_LINE;
         DBMS_OUTPUT.PUT_LINE('==== Ejecutando RenovarAbonoIlimitado ====');
         RenovarAbonoIlimitado(5, TO_DATE('31/12/2030', 'DD/MM/YYYY')); -- Nueva fecha de caducidad
     EXCEPTION
@@ -1010,6 +1063,7 @@ BEGIN
 
     -- Comprobar si una persona es empleado
     BEGIN
+        DBMS_OUTPUT.NEW_LINE;
         DBMS_OUTPUT.PUT_LINE('==== Ejecutando EsEmpleado ====');
         esEmpleado('46813937H');
     EXCEPTION
@@ -1021,9 +1075,9 @@ BEGIN
 
     -- Obtener conductores con minimo de viajes
     BEGIN
+        DBMS_OUTPUT.NEW_LINE;
         DBMS_OUTPUT.PUT_LINE('==== Ejecutando ObtenerConductoresMasViajes ====');
         obtenerConductoresMasViajes(0);
-        DBMS_OUTPUT.NEW_LINE;
     EXCEPTION
         WHEN OTHERS THEN
             DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
@@ -1033,9 +1087,23 @@ BEGIN
 
     -- Total de abonos vendidos
     BEGIN
+        DBMS_OUTPUT.NEW_LINE;
         DBMS_OUTPUT.PUT_LINE('==== Ejecutando TotalAbonosVendidos ====');
         totalAbonos := TotalAbonosVendidos; -- Asignar el valor retornado
         DBMS_OUTPUT.PUT_LINE('Total de abonos vendidos: ' || totalAbonos);
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+    END;
+
+    -- Detalles de la  línea de un bus urbano
+    BEGIN
+        DBMS_OUTPUT.NEW_LINE;
+        DBMS_OUTPUT.PUT_LINE('==== Ejecutando DetallesLineaAutobusUrbano ====');
+        lineaDetalles := DetallesLineaAutobusUrbano(2); -- Línea 1
+        DBMS_OUTPUT.PUT_LINE(lineaDetalles);
     EXCEPTION
         WHEN OTHERS THEN
             DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
