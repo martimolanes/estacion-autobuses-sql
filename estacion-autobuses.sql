@@ -24,7 +24,7 @@ DROP TABLE LINEAS_PARADAS CASCADE CONSTRAINTS;
 DROP TABLE AUTOBUS_INTERURBANO CASCADE CONSTRAINTS;
 DROP TABLE RUTA CASCADE CONSTRAINTS;
 DROP TABLE VIAJE CASCADE CONSTRAINTS;
-DROP TABLE PASAJERO_VIAJE CASCADE CONSTRAINTS;
+DROP TABLE PASAJERO_VIAJE CASCADE CONSTRAINTS; -- DROP NUEVA TABLA
 DROP TABLE SERVICIO CASCADE CONSTRAINTS;
 DROP TABLE BILLETE CASCADE CONSTRAINTS;
 DROP TABLE VENTA_BILLETE CASCADE CONSTRAINTS;
@@ -57,7 +57,7 @@ CREATE TABLE PERSONA(
 
 CREATE TABLE TELEFONO(
     dni VARCHAR(9) NOT NULL,
-    telefono VARCHAR(14) NOT NULL UNIQUE CHECK (REGEXP_LIKE (telefono, '^([+]\d{1,3})?\s?[0-9]{9}$')),
+    telefono VARCHAR(14) NOT NULL UNIQUE CHECK (REGEXP_LIKE (telefono, '^([+]\d{1,3})?\s?[0-9]{9}$')), -- Nuevo regex para soportar prefijos internacionales
     
     PRIMARY KEY (dni, telefono),
     FOREIGN KEY (dni) REFERENCES persona(dni) ON DELETE CASCADE
@@ -125,7 +125,7 @@ CREATE TABLE EMPRESA(
     cif VARCHAR(9) NOT NULL CHECK (REGEXP_LIKE(cif, '^[A-Z][0-9]{7}[A-Z]$')),
     nombre VARCHAR(30) NOT NULL UNIQUE CHECK (LENGTH(nombre) > 0),
     direccion VARCHAR(60) NOT NULL CHECK (LENGTH(direccion) > 0),
-    telefono VARCHAR(14) NOT NULL UNIQUE CHECK (REGEXP_LIKE (telefono, '^([+]\d{1,3})?\s?[0-9]{9}$')),
+    telefono VARCHAR(14) NOT NULL UNIQUE CHECK (REGEXP_LIKE (telefono, '^([+]\d{1,3})?\s?[0-9]{9}$')), -- Nuevo regex para soportar prefijos internacionales
     
     PRIMARY KEY (cif)
 );
@@ -154,7 +154,7 @@ CREATE TABLE AUTOBUS_URBANO(
     linea NUMBER NOT NULL,
     
     PRIMARY KEY (matricula),
-    FOREIGN KEY (matricula) REFERENCES autobus(matricula) ON DELETE CASCADE,
+    FOREIGN KEY (matricula) REFERENCES autobus(matricula) ON DELETE CASCADE, -- foreign key añadida tras la corrección
     FOREIGN KEY (linea) REFERENCES linea(num_linea) ON DELETE CASCADE
 );
 
@@ -206,6 +206,7 @@ CREATE TABLE VIAJE(
     FOREIGN KEY (autobus) REFERENCES autobus(matricula) ON DELETE SET NULL
 );
 
+-- Nueva tabla creada tras la corrección
 CREATE TABLE PASAJERO_VIAJE(
     id_viaje NUMBER NOT NULL,
     dni VARCHAR(9) NOT NULL,
@@ -219,7 +220,7 @@ CREATE TABLE SERVICIO(
     id_servicio NUMBER NOT NULL CHECK (id_servicio > 0),
     precio NUMBER(8,2) NOT NULL CHECK (precio > 0),
     contratado_por VARCHAR(9),
-    fecha DATE NOT NULL,
+    fecha DATE NOT NULL, -- nuevo campo añadido tras la corrección
     
     PRIMARY KEY (id_servicio),
     FOREIGN KEY (contratado_por) REFERENCES pasajero(dni) ON DELETE SET NULL
