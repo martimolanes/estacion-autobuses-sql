@@ -902,7 +902,7 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20001, 'Esa persona NO existe.');
     END IF;
     
-END;
+END EsEmpleado;
 /
 SHOW ERRORS;
 
