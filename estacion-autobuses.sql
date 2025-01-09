@@ -1,6 +1,9 @@
 SET AUTOCOMMIT on;
 SET SERVEROUTPUT on;
 
+-- drop triggers
+DROP TRIGGER validaContratoIndefinido;
+DROP TRIGGER validaOrdenParadas;
 -- drops vistas
 DROP VIEW VISTA_PERSONA;
 DROP VIEW PASAJEROS_MENORES;
@@ -199,11 +202,11 @@ CREATE TABLE VIAJE(
     ruta NUMBER,
     conductor VARCHAR(9),
     autobus VARCHAR(7),
-    
+
     PRIMARY KEY (id_viaje),
     FOREIGN KEY (ruta) REFERENCES ruta(id_ruta) ON DELETE SET NULL,
     FOREIGN KEY (conductor) REFERENCES conductor(dni) ON DELETE SET NULL,
-    FOREIGN KEY (autobus) REFERENCES autobus(matricula) ON DELETE SET NULL
+    FOREIGN KEY (autobus) REFERENCES autobus_interurbano(matricula) ON DELETE SET NULL
 );
 
 -- Nueva tabla creada tras la corrección
@@ -513,8 +516,8 @@ INSERT INTO RUTA (id_ruta, origen, destino, duracion) VALUES ('1', 'OURENSE', 'S
 INSERT INTO RUTA (id_ruta, origen, destino, duracion) VALUES ('2', 'OURENSE', 'VIGO', '90');
 
 -- tabla VIAJE
-INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('1', TO_DATE('14/03/2019', 'DD/MM/YYYY'),'2','35674253N','2024BRR');
-INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('2', TO_DATE('04/10/2020', 'DD/MM/YYYY'),'1','35537699R','3060RTX');
+INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('1', TO_DATE('14/03/2019', 'DD/MM/YYYY'),'2','35674253N','6754BDI');
+INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('2', TO_DATE('04/10/2020', 'DD/MM/YYYY'),'1','35537699R','2234KFC');
 INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('3', TO_DATE('28/07/2023', 'DD/MM/YYYY'),'2','82082351Y','6754BDI');
 
 -- tabla PASAJERO_VIAJE
@@ -669,7 +672,7 @@ WHERE id_contrato = (
 -- Cambiar el tipo de contrato de un empleado
 UPDATE contrato
 SET
-    tipo = 'INDEFINIDO'
+    tipo = 'PRACTICAS'
 WHERE
     id_contrato = (
         SELECT contrato
@@ -1114,3 +1117,53 @@ BEGIN
 
 END;
 /
+
+CREATE OR REPLACE TRIGGER validaContratoIndefinido
+BEFORE INSERT OR UPDATE ON CONTRATO
+FOR EACH ROW
+BEGIN
+    IF :NEW.tipo = 'INDEFINIDO' AND :NEW.fecha_fin IS NOT NULL THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Un contrato INDEFINIDO no puede tener una fecha de fin.');
+    END IF;
+END;
+/
+
+INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('1', 'INDEFINIDO', TO_DATE('14/03/1992', 'DD/MM/YYYY'), TO_DATE('14/03/1998', 'DD/MM/YYYY'), '40', '1350');
+
+-- Trigger para validar la inserción de una parada en una línea
+-- En caso de que querer insertar una parada que tiene de orden '3',
+-- comprobar que existen las paradas con orden '1' y '2' en la misma línea
+CREATE OR REPLACE TRIGGER validaOrdenParadas
+BEFORE INSERT OR UPDATE ON LINEAS_PARADAS
+FOR EACH ROW
+DECLARE
+    falta_orden EXCEPTION;
+    cnt NUMBER;
+    falta_parada NUMBER;
+BEGIN
+    -- Comprobar que si se inserta una parada con un orden mayor que 1,
+    IF :NEW.orden > 1 THEN
+        -- Todas las paradas anteriores existen en la misma línea.
+        FOR i IN 1 .. :NEW.orden - 1 LOOP
+            SELECT COUNT(*) INTO cnt
+            FROM LINEAS_PARADAS
+            WHERE linea = :NEW.linea AND orden = i;
+
+            IF cnt = 0 THEN
+                falta_parada := i;
+                RAISE falta_orden;
+            END IF;
+        END LOOP;
+    END IF;
+
+EXCEPTION
+    WHEN falta_orden THEN
+        RAISE_APPLICATION_ERROR(
+            -20001, 'No existen todas las paradas anteriores en la línea para el orden especificado: ' || :NEW.orden 
+            || CHR(10) || 'Falta la parada con orden: ' || falta_parada);
+END;
+/
+
+
+-- Debería dar error: no existe la parada con orden '4' en la línea '1' parada '3'
+INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '4', '5');
