@@ -1,5 +1,5 @@
-SET AUTOCOMMIT on;
-SET SERVEROUTPUT on;
+SET AUTOCOMMIT ON;
+SET SERVEROUTPUT ON;
 
 -- drop triggers
 DROP TRIGGER validaContratoIndefinido;
@@ -1128,7 +1128,7 @@ BEGIN
 END;
 /
 
-INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('1', 'INDEFINIDO', TO_DATE('14/03/1992', 'DD/MM/YYYY'), TO_DATE('14/03/1998', 'DD/MM/YYYY'), '40', '1350');
+-- INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('1', 'INDEFINIDO', TO_DATE('14/03/1992', 'DD/MM/YYYY'), TO_DATE('14/03/1998', 'DD/MM/YYYY'), '40', '1350');
 
 -- Trigger para validar la inserción de una parada en una línea
 -- En caso de que querer insertar una parada que tiene de orden '3',
@@ -1166,4 +1166,44 @@ END;
 
 
 -- Debería dar error: no existe la parada con orden '4' en la línea '1' parada '3'
-INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '4', '5');
+-- INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '4', '5');
+
+/*bloque de prueba para el trigger validaContratoIndefinido*/
+BEGIN
+   DBMS_OUTPUT.NEW_LINE;
+
+   DBMS_OUTPUT.PUT_LINE('TEST TRIGGER INSERT CORRECTO validaContratoIndefinido');
+   INSERT INTO CONTRATO (id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('4', 'INDEFINIDO', TO_DATE('23/11/2021', 'DD/MM/YYYY'), NULL, '25', '850');
+
+   DBMS_OUTPUT.PUT_LINE('TEST TRIGGER INSERT ERROR validaContratoIndefinido');
+   INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('5', 'INDEFINIDO', TO_DATE('04/07/2020', 'DD/MM/YYYY'), TO_DATE('24/05/2025', 'DD/MM/YYYY'), '20', '600');
+   -- se produce una excepcion
+
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('[EXCEPCION]');
+        DBMS_OUTPUT.PUT_LINE('[Codigo]: ' || SQLCODE || ' [Mensaje]: ' || SQLERRM);
+
+END;
+/
+
+BEGIN
+   DBMS_OUTPUT.NEW_LINE;
+
+   DBMS_OUTPUT.PUT_LINE('TEST TRIGGER UPDATE CORRECTO validaContratoIndefinido');
+   UPDATE CONTRATO
+   SET tipo = 'TEMPORAL', fecha_fin = SYSDATE + 30
+   WHERE id_contrato = 2;
+
+   DBMS_OUTPUT.PUT_LINE('TEST TRIGGER UPDATE ERROR validaContratoIndefinido');
+   UPDATE CONTRATO
+   SET tipo = 'INDEFINIDO', fecha_fin = SYSDATE + 30
+   WHERE id_contrato = 4;
+   
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('[EXCEPCION]');
+        DBMS_OUTPUT.PUT_LINE('[Codigo]: ' || SQLCODE || ' [Mensaje]: ' || SQLERRM);
+
+END;
+/
