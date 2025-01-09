@@ -4,6 +4,7 @@ SET SERVEROUTPUT ON;
 -- drop triggers
 DROP TRIGGER validaContratoIndefinido;
 DROP TRIGGER validaOrdenParadas;
+DROP TRIGGER validaFuturosViajesConductor;
 -- drops vistas
 DROP VIEW VISTA_PERSONA;
 DROP VIEW PASAJEROS_MENORES;
@@ -1207,3 +1208,23 @@ EXCEPTION
 
 END;
 /
+
+CREATE OR REPLACE TRIGGER validaFuturosViajesConductor
+BEFORE DELETE ON CONDUCTOR
+FOR EACH ROW
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*)
+    INTO v_count
+    FROM VIAJE
+    WHERE conductor = :OLD.dni AND fecha > SYSDATE;
+    
+    IF v_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'No se puede eliminar el conductor porque tiene viajes futuros asignados.');
+    END IF;
+END;
+/
+
+INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('4', TO_DATE('14/03/2025', 'DD/MM/YYYY'),'2','82082351Y','6754BDI');
+DELETE FROM CONDUCTOR WHERE dni = '82082351Y';
