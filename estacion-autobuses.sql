@@ -1031,9 +1031,9 @@ END DetallesLineaAutobusUrbano;
 /
 SHOW ERRORS;
 
-/********************************************************/
-/* 9.- Bloque para prueba de Procedimientos y Funciones */
-/********************************************************/
+/****************************************************/
+/* Bloque para prueba de Procedimientos y Funciones */
+/****************************************************/
 
 DECLARE
     totalAbonos NUMBER;
@@ -1119,6 +1119,11 @@ BEGIN
 
 END;
 /
+
+
+/********************/
+/*     Triggers     */
+/********************/
 
 CREATE OR REPLACE TRIGGER validaContratoIndefinido
 BEFORE INSERT OR UPDATE ON CONTRATO
@@ -1213,6 +1218,39 @@ COMPOUND TRIGGER
 END;
 /
 
+CREATE OR REPLACE TRIGGER validaFuturosViajesConductor
+FOR DELETE ON CONDUCTOR
+COMPOUND TRIGGER
+    TYPE viajes_t IS TABLE OF VIAJE%ROWTYPE;
+    viajes viajes_t;
+
+    BEFORE STATEMENT IS
+    BEGIN
+        SELECT *
+        BULK COLLECT INTO viajes
+        FROM VIAJE;
+    END BEFORE STATEMENT;
+
+    BEFORE EACH ROW IS
+    v_count NUMBER := 0;
+    BEGIN
+        FOR i IN 1..viajes.COUNT LOOP
+            IF viajes(i).conductor = :OLD.dni AND viajes(i).fecha > SYSDATE THEN
+                v_count := v_count + 1;
+            END IF;
+        END LOOP;
+
+        IF v_count > 0 THEN
+            RAISE_APPLICATION_ERROR(-20001, 'No se puede eliminar el conductor porque tiene viajes futuros asignados.');
+        END IF;
+    END BEFORE EACH ROW;
+END;
+/
+
+/**********************************/
+/* Bloque para prueba de Triggers */
+/**********************************/
+
 /*bloque de prueba para el trigger validaContratoIndefinido*/
 BEGIN
     DBMS_OUTPUT.NEW_LINE;
@@ -1250,36 +1288,6 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('[EXCEPCION]');
     DBMS_OUTPUT.PUT_LINE('[Codigo]: ' || SQLCODE || ' [Mensaje]: ' || SUBSTR(SQLERRM, 11, 300));
 
-END;
-/
-
-
-CREATE OR REPLACE TRIGGER validaFuturosViajesConductor
-FOR DELETE ON CONDUCTOR
-COMPOUND TRIGGER
-    TYPE viajes_t IS TABLE OF VIAJE%ROWTYPE;
-    viajes viajes_t;
-
-    BEFORE STATEMENT IS
-    BEGIN
-        SELECT *
-        BULK COLLECT INTO viajes
-        FROM VIAJE;
-    END BEFORE STATEMENT;
-
-    BEFORE EACH ROW IS
-    v_count NUMBER := 0;
-    BEGIN
-        FOR i IN 1..viajes.COUNT LOOP
-            IF viajes(i).conductor = :OLD.dni AND viajes(i).fecha > SYSDATE THEN
-                v_count := v_count + 1;
-            END IF;
-        END LOOP;
-
-        IF v_count > 0 THEN
-            RAISE_APPLICATION_ERROR(-20001, 'No se puede eliminar el conductor porque tiene viajes futuros asignados.');
-        END IF;
-    END BEFORE EACH ROW;
 END;
 /
 
@@ -1332,6 +1340,7 @@ BEGIN
 END;
 /
 
+/*bloque de prueba para el trigger comprobarAforoLleno*/
 BEGIN
     DBMS_OUTPUT.NEW_LINE;
     --Creamos autobus interurbano con aforo pequeño
@@ -1380,6 +1389,8 @@ BEGIN
 END;
 /
 
+
+/*bloque de prueba para el trigger validaFuturosViajesConductor*/
 BEGIN
     DBMS_OUTPUT.NEW_LINE;
 
