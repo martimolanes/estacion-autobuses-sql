@@ -5,6 +5,7 @@ SET SERVEROUTPUT ON;
 DROP TRIGGER validaContratoIndefinido;
 DROP TRIGGER validaOrdenParadas;
 DROP TRIGGER validaFuturosViajesConductor;
+DROP TRIGGER comprobarAforoLleno;
 -- drops vistas
 DROP VIEW VISTA_PERSONA;
 DROP VIEW PASAJEROS_MENORES;
@@ -55,14 +56,14 @@ CREATE TABLE PERSONA(
     nombre VARCHAR(30) NOT NULL CHECK (LENGTH (nombre) > 0),
     apellidos VARCHAR(60) NOT NULL CHECK (LENGTH (apellidos) > 0),
     fecha_nacimiento DATE NOT NULL,
-    
+
     PRIMARY KEY(dni)
 );
 
 CREATE TABLE TELEFONO(
     dni VARCHAR(9) NOT NULL,
     telefono VARCHAR(14) NOT NULL UNIQUE CHECK (REGEXP_LIKE (telefono, '^([+]\d{1,3})?\s?[0-9]{9}$')), -- Nuevo regex para soportar prefijos internacionales
-    
+
     PRIMARY KEY (dni, telefono),
     FOREIGN KEY (dni) REFERENCES persona(dni) ON DELETE CASCADE
 );
@@ -70,9 +71,9 @@ CREATE TABLE TELEFONO(
 CREATE TABLE PASAJERO(
     dni VARCHAR(9) NOT NULL,
     acompanante VARCHAR(9),
-    
+
     PRIMARY KEY(dni),
-    
+
     FOREIGN KEY (dni) REFERENCES persona(dni) ON DELETE CASCADE,
     FOREIGN KEY (acompanante) REFERENCES pasajero(dni) ON DELETE CASCADE --si se borra el acompanante tambien el pasajero
 );
@@ -84,7 +85,7 @@ CREATE TABLE CONTRATO(
     fecha_fin DATE,
     horas_semana NUMBER NOT NULL CHECK (horas_semana > 0),
     salario NUMBER NOT NULL CHECK (salario > 0),
-    
+
     PRIMARY KEY (id_contrato),
     CHECK(fecha_fin IS NULL OR fecha_fin > fecha_inicio)
 );
@@ -92,7 +93,7 @@ CREATE TABLE CONTRATO(
 CREATE TABLE EMPLEADO(
     dni VARCHAR(9) NOT NULL,
     contrato NUMBER NOT NULL,
-    
+
     PRIMARY KEY (dni),
     FOREIGN KEY (dni) REFERENCES persona(dni) ON DELETE CASCADE,
     FOREIGN KEY (contrato) REFERENCES contrato(id_contrato) ON DELETE CASCADE
@@ -102,7 +103,7 @@ CREATE TABLE FAMILIAR(
     dni VARCHAR(9) NOT NULL,
     empleado VARCHAR(9) NOT NULL,
     relacion VARCHAR(20) NOT NULL CHECK (LENGTH(relacion) > 0),
-    
+
     PRIMARY KEY(dni, empleado),
     FOREIGN KEY (dni) REFERENCES persona(dni) ON DELETE CASCADE,
     FOREIGN KEY (empleado) REFERENCES empleado(dni) ON DELETE CASCADE
@@ -111,7 +112,7 @@ CREATE TABLE FAMILIAR(
 CREATE TABLE CONDUCTOR(
     dni VARCHAR(9) NOT NULL,
     num_licencia VARCHAR(15) NOT NULL UNIQUE CHECK (LENGTH(num_licencia) > 0),
-    
+
     PRIMARY KEY (dni),
     FOREIGN KEY(dni) REFERENCES empleado(dni) ON DELETE CASCADE
 );
@@ -120,7 +121,7 @@ CREATE TABLE EMPLEADO_ESTACION(
     dni VARCHAR(9) NOT NULL,
     abonos_vendidos NUMBER NOT NULL CHECK (abonos_vendidos >= 0),
     billetes_vendidos NUMBER NOT NULL CHECK (billetes_vendidos >= 0),
-    
+
     PRIMARY KEY (dni),
     FOREIGN KEY (dni) REFERENCES empleado(dni) ON DELETE CASCADE
 );
@@ -130,7 +131,7 @@ CREATE TABLE EMPRESA(
     nombre VARCHAR(30) NOT NULL UNIQUE CHECK (LENGTH(nombre) > 0),
     direccion VARCHAR(60) NOT NULL CHECK (LENGTH(direccion) > 0),
     telefono VARCHAR(14) NOT NULL UNIQUE CHECK (REGEXP_LIKE (telefono, '^([+]\d{1,3})?\s?[0-9]{9}$')), -- Nuevo regex para soportar prefijos internacionales
-    
+
     PRIMARY KEY (cif)
 );
 
@@ -140,7 +141,7 @@ CREATE TABLE AUTOBUS(
     modelo VARCHAR(30) NOT NULL CHECK (LENGTH(modelo) > 0),
     fecha_itv DATE NOT NULL,
     propietario VARCHAR(9) NOT NULL,
-    
+
     PRIMARY KEY (matricula),
     FOREIGN KEY (propietario) REFERENCES empresa(cif) ON DELETE CASCADE
 );
@@ -148,7 +149,7 @@ CREATE TABLE AUTOBUS(
 CREATE TABLE LINEA(
     num_linea NUMBER NOT NULL CHECK (num_linea > 0), --puede ser varchar si es tipo '12B'
     descripcion VARCHAR(40) NOT NULL CHECK (LENGTH(descripcion) > 0),
-    
+
     PRIMARY KEY(num_linea)
 );
 
@@ -156,7 +157,7 @@ CREATE TABLE AUTOBUS_URBANO(
     matricula VARCHAR(7) NOT NULL,
     aforo NUMBER NOT NULL CHECK (aforo > 0),
     linea NUMBER NOT NULL,
-    
+
     PRIMARY KEY (matricula),
     FOREIGN KEY (matricula) REFERENCES autobus(matricula) ON DELETE CASCADE, -- foreign key añadida tras la corrección
     FOREIGN KEY (linea) REFERENCES linea(num_linea) ON DELETE CASCADE
@@ -165,7 +166,7 @@ CREATE TABLE AUTOBUS_URBANO(
 CREATE TABLE PARADA(
     cod_parada NUMBER NOT NULL CHECK (cod_parada > 0), --puede ser varchar tambien
     direccion VARCHAR(50) NOT NULL UNIQUE CHECK (LENGTH(direccion) > 0),
-    
+
     PRIMARY KEY(cod_parada)
 );
 
@@ -173,7 +174,7 @@ CREATE TABLE LINEAS_PARADAS(
     linea NUMBER NOT NULL,
     parada NUMBER NOT NULL,
     orden NUMBER NOT NULL CHECK (orden > 0),
-    
+
     PRIMARY KEY (linea, parada),
     FOREIGN KEY (linea) REFERENCES linea(num_linea) ON DELETE CASCADE,
     FOREIGN KEY (parada) REFERENCES parada(cod_parada) ON DELETE CASCADE,
@@ -183,7 +184,7 @@ CREATE TABLE LINEAS_PARADAS(
 CREATE TABLE AUTOBUS_INTERURBANO(
     matricula VARCHAR(7) NOT NULL,
     num_plazas NUMBER NOT NULL CHECK (num_plazas > 0),
-    
+
     PRIMARY KEY (matricula),
     FOREIGN KEY (matricula) REFERENCES autobus(matricula) ON DELETE CASCADE
 );
@@ -193,7 +194,7 @@ CREATE TABLE RUTA(
     origen VARCHAR(50) NOT NULL CHECK (LENGTH(origen) > 0),
     destino VARCHAR(50) NOT NULL CHECK (LENGTH(destino) > 0),
     duracion NUMBER NOT NULL CHECK (duracion > 0), --en minutos
-    
+
     PRIMARY KEY (id_ruta)
 );
 
@@ -223,17 +224,17 @@ CREATE TABLE PASAJERO_VIAJE(
 CREATE TABLE SERVICIO(
     id_servicio NUMBER NOT NULL CHECK (id_servicio > 0),
     precio NUMBER(8,2) NOT NULL CHECK (precio > 0),
-    contratado_por VARCHAR(9),
-    fecha DATE NOT NULL, -- nuevo campo añadido tras la corrección
-    
-    PRIMARY KEY (id_servicio),
-    FOREIGN KEY (contratado_por) REFERENCES pasajero(dni) ON DELETE SET NULL
+contratado_por VARCHAR(9),
+fecha DATE NOT NULL, -- nuevo campo añadido tras la corrección
+
+PRIMARY KEY (id_servicio),
+FOREIGN KEY (contratado_por) REFERENCES pasajero(dni) ON DELETE SET NULL
 );
 
 CREATE TABLE BILLETE(
     id_billete NUMBER NOT NULL CHECK (id_billete > 0),
     viaje NUMBER NOT NULL,
-    
+
     PRIMARY KEY (id_billete),
     FOREIGN KEY (viaje) REFERENCES viaje(id_viaje) ON DELETE CASCADE
 );
@@ -241,7 +242,7 @@ CREATE TABLE BILLETE(
 CREATE TABLE VENTA_BILLETE(
     id_servicio NUMBER NOT NULL,
     billete NUMBER,
-    
+
     PRIMARY KEY (id_servicio),
     FOREIGN KEY (id_servicio) REFERENCES servicio(id_servicio) ON DELETE CASCADE,
     FOREIGN KEY (billete) REFERENCES billete(id_billete) ON DELETE SET NULL
@@ -251,16 +252,16 @@ CREATE TABLE BILLETE_COMBINADO(
     id_servicio NUMBER NOT NULL,
     tipo VARCHAR(20) NOT NULL CHECK(tipo IN ('BUS+TREN', 'BUS+AVION', 'BUS+FERRY')),
     billete NUMBER,
-    
+
     PRIMARY KEY (id_servicio),
     FOREIGN KEY (billete) REFERENCES billete(id_billete) ON DELETE SET NULL,
     FOREIGN KEY (id_servicio) REFERENCES servicio(id_servicio) ON DELETE CASCADE
 );
-    
+
 CREATE TABLE ALQUILER_AUTOBUS(
     id_servicio NUMBER NOT NULL,
     autobus VARCHAR(7) NOT NULL,
-    
+
     PRIMARY KEY(id_servicio),
     FOREIGN KEY (id_servicio) REFERENCES servicio(id_servicio) ON DELETE CASCADE,
     FOREIGN KEY (autobus) REFERENCES autobus_interurbano(matricula) ON DELETE CASCADE
@@ -270,16 +271,16 @@ CREATE TABLE ABONO(
     id_abono NUMBER NOT NULL CHECK (id_abono > 0),
     fecha_contrato DATE NOT NULL,
     fecha_caducidad DATE NOT NULL,
-    
+
     PRIMARY KEY(id_abono),
-    
+
     CHECK(fecha_caducidad > fecha_contrato)
 );
 
 CREATE TABLE VENTA_ABONO(
     id_servicio NUMBER NOT NULL,
     abono NUMBER NOT NULL,
-        
+
     PRIMARY KEY(id_servicio),
     FOREIGN KEY (id_servicio) REFERENCES servicio(id_servicio) ON DELETE CASCADE,
     FOREIGN KEY (abono) REFERENCES abono(id_abono) ON DELETE CASCADE
@@ -289,16 +290,16 @@ CREATE TABLE ABONO_NORMAL(
     id_abono NUMBER NOT NULL,
     limite_viajes NUMBER NOT NULL CHECK (limite_viajes > 0),
     viajes_consumidos NUMBER NOT NULL CHECK (viajes_consumidos >= 0),
-    
+
     PRIMARY KEY (id_abono),
     FOREIGN KEY (id_abono) REFERENCES abono(id_abono) ON DELETE CASCADE,
-    
+
     CHECK (limite_viajes >= viajes_consumidos)
 );
 
 CREATE TABLE ABONO_ILIMITADO(
     id_abono NUMBER NOT NULL,
-    
+
     PRIMARY KEY(id_abono),
     FOREIGN KEY (id_abono) REFERENCES abono(id_abono) ON DELETE CASCADE
 );
@@ -308,7 +309,7 @@ CREATE TABLE ABONO_EMPLEADO(
     id_abono NUMBER NOT NULL,
     empleado VARCHAR(9) NOT NULL,
     descuento NUMBER NOT NULL CHECK (descuento BETWEEN 10 AND 60),
-    
+
     PRIMARY KEY (id_abono),
     FOREIGN KEY (id_abono) REFERENCES abono(id_abono) ON DELETE CASCADE,
     FOREIGN KEY (empleado) REFERENCES empleado(dni) ON DELETE CASCADE
@@ -319,7 +320,7 @@ CREATE TABLE ABONO_FAMILIAR(
     familiar VARCHAR(9) NOT NULL,
     empleado VARCHAR(9) NOT NULL,
     descuento NUMBER NOT NULL CHECK (descuento BETWEEN 10 AND 60),
-    
+
     PRIMARY KEY (id_abono),
     FOREIGN KEY (id_abono) REFERENCES abono(id_abono) ON DELETE CASCADE,
     FOREIGN KEY (familiar, empleado) REFERENCES familiar(dni, empleado) ON DELETE CASCADE
@@ -328,19 +329,19 @@ CREATE TABLE ABONO_FAMILIAR(
 -- Sentencias de Creacion de Indices
 
 /* Indice compuesto para optimizar consultas que filtren registros en la tabla 'persona', 
-   priorizando busquedas por 'nombre' seguido de 'apellidos', aprovechando el acceso rapido mediante indice en filtros WHERE */ 
+priorizando busquedas por 'nombre' seguido de 'apellidos', aprovechando el acceso rapido mediante indice en filtros WHERE */ 
 CREATE INDEX indice_persona ON persona(nombre, apellidos);
 
 /* Indice sobre la columna 'fecha_inicio' para acelerar las consultas que filtran o clasifican 
-    registros de la tabla 'contrato', mejorando el rendimiento de busquedas basadas en rangos de fechas o comparaciones en filtros WHERE. */
+registros de la tabla 'contrato', mejorando el rendimiento de busquedas basadas en rangos de fechas o comparaciones en filtros WHERE. */
 CREATE INDEX indice_contrato ON contrato(fecha_inicio);
 
 /* Indice en la columna 'fecha_contrato' para optimizar el acceso a los registros en la tabla 'abono' que dependen de la fecha del contrato, 
-    especialmente util en consultas que involucren agrupacion o filtrado por fecha. */
+especialmente util en consultas que involucren agrupacion o filtrado por fecha. */
 CREATE INDEX indice_abono ON abono(fecha_contrato);
 
 /* Indice sobre la columna 'fecha' en la tabla 'viaje', creado para mejorar el tiempo de respuesta de consultas que busquen o filtren viajes 
-    por fechas especificas o rangos de fechas, evitando full table scans. */ 
+por fechas especificas o rangos de fechas, evitando full table scans. */ 
 CREATE INDEX indice_viaje ON viaje(fecha);
 
 -- Sentencias para la creacion de vistas
@@ -348,28 +349,28 @@ CREATE INDEX indice_viaje ON viaje(fecha);
 /*Vista que muestra la edad*/
 /*Vista actualizable*/
 CREATE OR REPLACE VIEW VISTA_PERSONA AS
-   SELECT dni, (nombre || ' ' || apellidos) AS nombre_completo,
-   fecha_nacimiento, TRUNC((sysdate - fecha_nacimiento)/365,0) AS edad
+SELECT dni, (nombre || ' ' || apellidos) AS nombre_completo,
+    fecha_nacimiento, TRUNC((sysdate - fecha_nacimiento)/365,0) AS edad
 FROM persona;
 
 /*Vista que muestra los pasajeros menores de edad*/
 /*Vista no actualizable*/
 CREATE OR REPLACE VIEW PASAJEROS_MENORES AS
-   SELECT p.dni, p.nombre, p.apellidos, p.fecha_nacimiento
-   FROM Persona p
-   JOIN Pasajero pa ON p.dni = pa.dni
-   WHERE (sysdate - p.fecha_nacimiento) / 365 < 18;
-   
+SELECT p.dni, p.nombre, p.apellidos, p.fecha_nacimiento
+FROM Persona p
+JOIN Pasajero pa ON p.dni = pa.dni
+WHERE (sysdate - p.fecha_nacimiento) / 365 < 18;
+
 /*Vista que muestra la informacion de un contrato y un empleado*/
 /*Vista no actualizable*/
 CREATE  OR REPLACE VIEW VISTA_INFO_CONTRATO AS
 SELECT e.dni,
-   c.id_contrato,
-   c.tipo,
-   c.salario,
-   c.horas_semana,
-   c.fecha_inicio,
-   c.fecha_fin
+    c.id_contrato,
+    c.tipo,
+    c.salario,
+    c.horas_semana,
+    c.fecha_inicio,
+    c.fecha_fin
 FROM EMPLEADO e JOIN CONTRATO c ON e.CONTRATO = c.ID_CONTRATO JOIN PERSONA p ON e.dni= p.dni;
 
 /*Vista que muestra los abonos normales que aun no caducaron y que aun tienen viajes disponibles*/
@@ -419,7 +420,7 @@ INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, s
 INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('3', 'PRACTICAS', TO_DATE('16/09/2024', 'DD/MM/YYYY'), TO_DATE('27/12/2024', 'DD/MM/YYYY'), '20', '400');
 INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('4', 'FORMACION', TO_DATE('14/09/2022', 'DD/MM/YYYY'), TO_DATE('24/05/2024', 'DD/MM/YYYY'), '20', '600');
 
-  
+
 -- tabla EMPLEADO
 INSERT INTO EMPLEADO (dni, contrato) VALUES ('35674253N', 1);
 INSERT INTO EMPLEADO (dni, contrato) VALUES ('46813937H', 2);
@@ -633,13 +634,13 @@ WHERE propietario = 'B2322468R';
 -- Despedir a un empleado
 UPDATE contrato
 SET
-    fecha_fin = SYSDATE
+fecha_fin = SYSDATE
 WHERE
-    id_contrato = (
-        SELECT contrato
-        FROM empleado
-        WHERE dni = '46813937H'
-    );
+id_contrato = (
+    SELECT contrato
+    FROM empleado
+    WHERE dni = '46813937H'
+);
 
 
 -- Mostrar datos de los empleados que ya no trabajan en la estacion
@@ -651,13 +652,13 @@ WHERE p.dni = e.dni AND e.contrato = c.id_contrato AND c.fecha_fin <= SYSDATE;
 -- Subir el salario de un empleado
 UPDATE contrato
 SET
-    salario = salario + 100
+salario = salario + 100
 WHERE
-    id_contrato = (
-        SELECT contrato
-        FROM empleado
-        WHERE dni = '46813937H'
-    );
+id_contrato = (
+    SELECT contrato
+    FROM empleado
+    WHERE dni = '46813937H'
+);
 
 
 -- Comprobar salario de un empleado
@@ -673,13 +674,13 @@ WHERE id_contrato = (
 -- Cambiar el tipo de contrato de un empleado
 UPDATE contrato
 SET
-    tipo = 'PRACTICAS'
+tipo = 'PRACTICAS'
 WHERE
-    id_contrato = (
-        SELECT contrato
-        FROM empleado
-        WHERE dni = '46813937H'
-    );
+id_contrato = (
+    SELECT contrato
+    FROM empleado
+    WHERE dni = '46813937H'
+);
 
 
 -- Comprobar tipo de contrato de un empleado
@@ -696,10 +697,10 @@ WHERE id_contrato = (
 SELECT *
 FROM EMPLEADO
 WHERE contrato IN (
-                SELECT id_contrato
-                FROM CONTRATO
-                WHERE salario > 1000
-                );
+    SELECT id_contrato
+    FROM CONTRATO
+    WHERE salario > 1000
+);
 
 
 -- Mostrar las paradas de la linea 2 en orden ascendente
@@ -730,11 +731,11 @@ WHERE id_viaje = 2;
 SELECT *
 FROM CONDUCTOR
 WHERE dni IN (
-                SELECT conductor
-                FROM VIAJE
-                GROUP BY conductor
-                HAVING COUNT(*) >= 2
-            );
+    SELECT conductor
+    FROM VIAJE
+    GROUP BY conductor
+    HAVING COUNT(*) >= 2
+);
 
 
 -- Ejemplo de borrado de una persona que sea empleado con un familiar asociado. El familiar tiene un abono tambien
@@ -761,28 +762,28 @@ WHERE empleado = '35674253N';
 CREATE OR REPLACE
 PROCEDURE ActualizarSalarios(incremento IN NUMBER)
 IS
-   CURSOR c_contratos IS
-      SELECT salario
-      FROM CONTRATO
-      FOR UPDATE;
+CURSOR c_contratos IS
+SELECT salario
+FROM CONTRATO
+FOR UPDATE;
 BEGIN
-   IF incremento <= 0 THEN
-      RAISE_APPLICATION_ERROR(-20000, 'El incremento debe ser mayor que 0.');
-   END IF;
+    IF incremento <= 0 THEN
+    RAISE_APPLICATION_ERROR(-20000, 'El incremento debe ser mayor que 0.');
+END IF;
 
-   FOR reg_contrato IN c_contratos LOOP
-      UPDATE CONTRATO
-      SET salario = salario + incremento
-      WHERE CURRENT OF c_contratos;
-   END LOOP;
+FOR reg_contrato IN c_contratos LOOP
+UPDATE CONTRATO
+SET salario = salario + incremento
+WHERE CURRENT OF c_contratos;
+END LOOP;
 
-   DBMS_OUTPUT.PUT_LINE('Salarios actualizados correctamente.');
-   COMMIT;
+DBMS_OUTPUT.PUT_LINE('Salarios actualizados correctamente.');
+COMMIT;
 EXCEPTION
-   WHEN OTHERS THEN
-      DBMS_OUTPUT.PUT_LINE('[ERROR]: ' || SQLERRM);
-      ROLLBACK;
-      RAISE;
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE('[ERROR]: ' || SQLERRM);
+ROLLBACK;
+RAISE;
 END ActualizarSalarios;
 /
 SHOW ERRORS;
@@ -790,69 +791,69 @@ SHOW ERRORS;
 CREATE OR REPLACE
 PROCEDURE RenovarAbonoIlimitado(abono_id IN NUMBER, nueva_fecha IN DATE)
 IS
-    -- Declaración de cursores
-    CURSOR c_abono IS 
-        SELECT fecha_contrato 
-        FROM ABONO 
-        WHERE id_abono = abono_id;
+-- Declaración de cursores
+CURSOR c_abono IS 
+SELECT fecha_contrato 
+FROM ABONO 
+WHERE id_abono = abono_id;
 
-    CURSOR c_abono_ilimitado IS
-        SELECT COUNT(*) AS contador
-        FROM ABONO_ILIMITADO 
-        WHERE id_abono = abono_id;
+CURSOR c_abono_ilimitado IS
+SELECT COUNT(*) AS contador
+FROM ABONO_ILIMITADO 
+WHERE id_abono = abono_id;
 
-    -- Variables para almacenar datos de los cursores
-    v_fecha_contrato DATE;
-    v_contador NUMBER;
+-- Variables para almacenar datos de los cursores
+v_fecha_contrato DATE;
+v_contador NUMBER;
 BEGIN
     IF nueva_fecha IS NULL THEN
-        RAISE_APPLICATION_ERROR(-20000, 'La nueva fecha de caducidad no puede ser nula.');
+    RAISE_APPLICATION_ERROR(-20000, 'La nueva fecha de caducidad no puede ser nula.');
+END IF;
+
+-- Abrir y recuperar la fecha de contrato
+OPEN c_abono;
+FETCH c_abono INTO v_fecha_contrato;
+
+-- Verificar si el abono existe
+IF c_abono%NOTFOUND THEN
+CLOSE c_abono;
+RAISE_APPLICATION_ERROR(-20001, 'El abono especificado no existe.');
+    END IF;
+CLOSE c_abono;
+
+IF nueva_fecha <= v_fecha_contrato THEN
+RAISE_APPLICATION_ERROR(-20002, 'La nueva fecha de caducidad debe ser posterior a la fecha de contrato.');
     END IF;
 
-    -- Abrir y recuperar la fecha de contrato
-    OPEN c_abono;
-    FETCH c_abono INTO v_fecha_contrato;
+-- Verificar si es un abono ilimitado
+OPEN c_abono_ilimitado;
+FETCH c_abono_ilimitado INTO v_contador;
 
-    -- Verificar si el abono existe
-    IF c_abono%NOTFOUND THEN
-        CLOSE c_abono;
-        RAISE_APPLICATION_ERROR(-20001, 'El abono especificado no existe.');
+-- Verificar si es un abono ilimitado
+IF v_contador = 0 THEN
+CLOSE c_abono_ilimitado;
+RAISE_APPLICATION_ERROR(-20003, 'El abono especificado no es ilimitado.');
     END IF;
-    CLOSE c_abono;
+CLOSE c_abono_ilimitado;
 
-    IF nueva_fecha <= v_fecha_contrato THEN
-        RAISE_APPLICATION_ERROR(-20002, 'La nueva fecha de caducidad debe ser posterior a la fecha de contrato.');
-    END IF;
+-- Actualizar la fecha de caducidad
+UPDATE ABONO
+SET fecha_caducidad = nueva_fecha
+WHERE id_abono = abono_id;
 
-    -- Verificar si es un abono ilimitado
-    OPEN c_abono_ilimitado;
-    FETCH c_abono_ilimitado INTO v_contador;
-
-    -- Verificar si es un abono ilimitado
-    IF v_contador = 0 THEN
-        CLOSE c_abono_ilimitado;
-        RAISE_APPLICATION_ERROR(-20003, 'El abono especificado no es ilimitado.');
-    END IF;
-    CLOSE c_abono_ilimitado;
-
-    -- Actualizar la fecha de caducidad
-    UPDATE ABONO
-    SET fecha_caducidad = nueva_fecha
-    WHERE id_abono = abono_id;
-
-    -- Verificar que la actualización se realizó
-    IF SQL%ROWCOUNT = 0 THEN
-        RAISE_APPLICATION_ERROR(-20004, 'No se pudo actualizar la fecha de caducidad.');
+-- Verificar que la actualización se realizó
+IF SQL%ROWCOUNT = 0 THEN
+RAISE_APPLICATION_ERROR(-20004, 'No se pudo actualizar la fecha de caducidad.');
     END IF;
 
-    -- Confirmar la transacción
-    DBMS_OUTPUT.PUT_LINE('Abono ilimitado renovado correctamente.');
-    COMMIT;
+-- Confirmar la transacción
+DBMS_OUTPUT.PUT_LINE('Abono ilimitado renovado correctamente.');
+COMMIT;
 EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('[ERROR]: ' || SQLERRM);
-        ROLLBACK;
-        RAISE;
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE('[ERROR]: ' || SQLERRM);
+ROLLBACK;
+RAISE;
 END RenovarAbonoIlimitado;
 /
 SHOW ERRORS;
@@ -860,129 +861,129 @@ SHOW ERRORS;
 -- Función que comprueba si una Persona es de tipo Empleado.
 CREATE OR REPLACE PROCEDURE EsEmpleado(dniPersona IN VARCHAR)
 IS
-    -- Variable para almacenar el DNI
-    dniPer Persona.dni%TYPE;
-    
-    -- cursor para ver existe en la tabla Persona
-    CURSOR c_persona IS
-        SELECT dni
-        FROM Persona
-        WHERE dni = dniPersona;
-    
-    -- cursor para ver si existe en la tabla Empleado
-    CURSOR c_Empleado IS
-        SELECT dni
-        FROM Empleado
-        WHERE dni = dniPersona;
-    
-    -- Excepción personalizada
-    personaNoExisteException EXCEPTION;
-    PRAGMA EXCEPTION_INIT(personaNoExisteException, -20001);
-    
+-- Variable para almacenar el DNI
+dniPer Persona.dni%TYPE;
+
+-- cursor para ver existe en la tabla Persona
+CURSOR c_persona IS
+SELECT dni
+FROM Persona
+WHERE dni = dniPersona;
+
+-- cursor para ver si existe en la tabla Empleado
+CURSOR c_Empleado IS
+SELECT dni
+FROM Empleado
+WHERE dni = dniPersona;
+
+-- Excepción personalizada
+personaNoExisteException EXCEPTION;
+PRAGMA EXCEPTION_INIT(personaNoExisteException, -20001);
+
 BEGIN
     -- Usamos el cursor para ver si DNI esta en Persona
     OPEN c_persona;
     FETCH c_persona INTO dniPer;
 
     IF c_persona%FOUND THEN
-        -- Si se encuentra
-        OPEN c_Empleado;
-        FETCH c_Empleado INTO dniPer;
-        
-        IF c_Empleado%FOUND THEN
-            -- Si encontramos el DNI en ambas tablas
-            DBMS_OUTPUT.PUT_LINE( dniPersona || ' es un Empleado.');
-            CLOSE c_Empleado;
-            CLOSE c_persona;
-        ELSE
-            -- Si no se encuentra en Empleado
-            DBMS_OUTPUT.PUT_LINE( dniPersona || ' NO es un Empleado.');
-            CLOSE c_Empleado;
-            CLOSE c_persona;
-        END IF;
+    -- Si se encuentra
+    OPEN c_Empleado;
+    FETCH c_Empleado INTO dniPer;
+
+    IF c_Empleado%FOUND THEN
+    -- Si encontramos el DNI en ambas tablas
+    DBMS_OUTPUT.PUT_LINE( dniPersona || ' es un Empleado.');
+    CLOSE c_Empleado;
+    CLOSE c_persona;
     ELSE
-        -- Si no se encuentra el DNI en Persona
-        CLOSE c_persona;
-        RAISE_APPLICATION_ERROR(-20001, 'Esa persona NO existe.');
+    -- Si no se encuentra en Empleado
+    DBMS_OUTPUT.PUT_LINE( dniPersona || ' NO es un Empleado.');
+    CLOSE c_Empleado;
+    CLOSE c_persona;
+END IF;
+ELSE
+-- Si no se encuentra el DNI en Persona
+CLOSE c_persona;
+RAISE_APPLICATION_ERROR(-20001, 'Esa persona NO existe.');
     END IF;
-    
+
 END EsEmpleado;
 /
 SHOW ERRORS;
 
 CREATE OR REPLACE PROCEDURE ObtenerConductoresMasViajes(num_viajes IN NUMBER)
-IS
+    IS
     regCond CONDUCTOR%ROWTYPE;
     NO_CONDUCTORES_EXCEPTION EXCEPTION;
     conductoresCount NUMBER;
 
     CURSOR c_cond IS
-        SELECT c.dni, c.num_licencia
-            FROM CONDUCTOR c
-            WHERE c.dni IN (
-                SELECT conductor
-                FROM VIAJE
-                GROUP BY conductor
-                HAVING COUNT(*) > num_viajes
-            );
+    SELECT c.dni, c.num_licencia
+    FROM CONDUCTOR c
+    WHERE c.dni IN (
+        SELECT conductor
+        FROM VIAJE
+        GROUP BY conductor
+        HAVING COUNT(*) > num_viajes
+    );
 BEGIN
     IF num_viajes < 0 THEN
-        RAISE_APPLICATION_ERROR(-20000, 'El numero de viajes no puede ser negativo');
-    END IF;
+    RAISE_APPLICATION_ERROR(-20000, 'El numero de viajes no puede ser negativo');
+END IF;
 
-    OPEN c_cond;
-    DBMS_OUTPUT.PUT_LINE('Lista de conductores con mas de '|| num_viajes || ' viajes');
-    LOOP
-        FETCH c_cond INTO regCond;
-        EXIT WHEN c_cond%NOTFOUND;
-        DBMS_OUTPUT.PUT('DNI: ' || regCond.dni || '. Licencia: ' || regCond.num_licencia);
-        DBMS_OUTPUT.PUT_LINE('');
+OPEN c_cond;
+DBMS_OUTPUT.PUT_LINE('Lista de conductores con mas de '|| num_viajes || ' viajes');
+LOOP
+FETCH c_cond INTO regCond;
+EXIT WHEN c_cond%NOTFOUND;
+DBMS_OUTPUT.PUT('DNI: ' || regCond.dni || '. Licencia: ' || regCond.num_licencia);
+DBMS_OUTPUT.PUT_LINE('');
     END LOOP;
 
-    conductoresCount := c_cond%ROWCOUNT;
-    IF(conductoresCount = 0) THEN
-        RAISE NO_CONDUCTORES_EXCEPTION;
+conductoresCount := c_cond%ROWCOUNT;
+IF(conductoresCount = 0) THEN
+RAISE NO_CONDUCTORES_EXCEPTION;
     END IF;
-    CLOSE c_cond;
+CLOSE c_cond;
 
 EXCEPTION
-    WHEN NO_CONDUCTORES_EXCEPTION THEN
-        CLOSE c_cond;
-        RAISE_APPLICATION_ERROR(-20001, 'No hay conductores con mas de ' || num_viajes || ' viajes.');
-    WHEN OTHERS THEN
-        CLOSE c_cond;
-        RAISE_APPLICATION_ERROR(-20002, 'Error desconocido: ' || SQLERRM);
-    
+WHEN NO_CONDUCTORES_EXCEPTION THEN
+CLOSE c_cond;
+RAISE_APPLICATION_ERROR(-20001, 'No hay conductores con mas de ' || num_viajes || ' viajes.');
+WHEN OTHERS THEN
+CLOSE c_cond;
+RAISE_APPLICATION_ERROR(-20002, 'Error desconocido: ' || SQLERRM);
+
 END ObtenerConductoresMasViajes;
 /
 SHOW ERRORS;
 
 CREATE OR REPLACE FUNCTION TotalAbonosVendidos
-    RETURN NUMBER
-    IS
-    CURSOR c_abonos IS
-        SELECT abonos_vendidos
-        FROM EMPLEADO_ESTACION;
+RETURN NUMBER
+IS
+CURSOR c_abonos IS
+SELECT abonos_vendidos
+FROM EMPLEADO_ESTACION;
 
-    totalAbonos NUMBER := 0;
-    v_abono NUMBER;
+totalAbonos NUMBER := 0;
+v_abono NUMBER;
 BEGIN
-    -- Abrir y recorrer el cursor
-    OPEN c_abonos;
-    LOOP
-        FETCH c_abonos INTO v_abono;
-        EXIT WHEN c_abonos%NOTFOUND; -- Salir cuando no haya más filas
-    
-        totalAbonos := totalAbonos + NVL(v_abono, 0); -- Sumar cada abono al total
+-- Abrir y recorrer el cursor
+OPEN c_abonos;
+LOOP
+FETCH c_abonos INTO v_abono;
+EXIT WHEN c_abonos%NOTFOUND; -- Salir cuando no haya más filas
+
+totalAbonos := totalAbonos + NVL(v_abono, 0); -- Sumar cada abono al total
     END LOOP;
-    
-    CLOSE c_abonos;
-    
-    RETURN totalAbonos;
+
+CLOSE c_abonos;
+
+RETURN totalAbonos;
 EXCEPTION
-    WHEN OTHERS THEN
-        RAISE_APPLICATION_ERROR(-20002, 'Error desconocido: ' || SQLERRM);
-        
+WHEN OTHERS THEN
+RAISE_APPLICATION_ERROR(-20002, 'Error desconocido: ' || SQLERRM);
+
 END TotalAbonosVendidos;
 /
 SHOW ERRORS;
@@ -990,23 +991,23 @@ SHOW ERRORS;
 -- Detalles de la ruta de una línea de un bus urbano
 CREATE OR REPLACE FUNCTION DetallesLineaAutobusUrbano(nlinea IN NUMBER)
     RETURN VARCHAR2
-IS
+    IS
     CURSOR c_paradas IS
-        SELECT p.direccion
-        FROM PARADA p
-        JOIN LINEAS_PARADAS lp ON p.cod_parada = lp.parada
-        WHERE lp.linea = nlinea
-        ORDER BY lp.orden;
+    SELECT p.direccion
+    FROM PARADA p
+    JOIN LINEAS_PARADAS lp ON p.cod_parada = lp.parada
+    WHERE lp.linea = nlinea
+    ORDER BY lp.orden;
 
-    CURSOR c_linea IS
-        SELECT descripcion
-        FROM LINEA
-        WHERE num_linea = nlinea;
+CURSOR c_linea IS
+SELECT descripcion
+FROM LINEA
+WHERE num_linea = nlinea;
 
-    v_parada VARCHAR2(400);
-    line_description VARCHAR2(40);
+v_parada VARCHAR2(400);
+line_description VARCHAR2(40);
 
-    ruta VARCHAR2(4000) := 'Paradas de la línea ' || nlinea;
+ruta VARCHAR2(4000) := 'Paradas de la línea ' || nlinea;
 BEGIN
 
     OPEN c_linea;
@@ -1017,15 +1018,15 @@ BEGIN
 
     OPEN c_paradas;
     LOOP
-        FETCH c_paradas INTO v_parada;
-        EXIT WHEN c_paradas%NOTFOUND;
+    FETCH c_paradas INTO v_parada;
+    EXIT WHEN c_paradas%NOTFOUND;
 
-        ruta := ruta || v_parada || ', ';
-    END LOOP;
+    ruta := ruta || v_parada || ', ';
+END LOOP;
 
-    CLOSE c_paradas;
+CLOSE c_paradas;
 
-    RETURN SUBSTR(ruta, 1, LENGTH(ruta) - 2); -- Eliminar la última coma y espacio
+RETURN SUBSTR(ruta, 1, LENGTH(ruta) - 2); -- Eliminar la última coma y espacio
 END DetallesLineaAutobusUrbano;
 /
 SHOW ERRORS;
@@ -1035,85 +1036,85 @@ SHOW ERRORS;
 /********************************************************/
 
 DECLARE
-    totalAbonos NUMBER;
-    lineaDetalles VARCHAR2(4000);
+totalAbonos NUMBER;
+lineaDetalles VARCHAR2(4000);
 BEGIN
-    DBMS_OUTPUT.NEW_LINE;
-    DBMS_OUTPUT.PUT_LINE('==== Pruebas de Procedimientos y Funciones ====');
-    DBMS_OUTPUT.NEW_LINE;
+DBMS_OUTPUT.NEW_LINE;
+DBMS_OUTPUT.PUT_LINE('==== Pruebas de Procedimientos y Funciones ====');
+DBMS_OUTPUT.NEW_LINE;
 
-    -- Actualizar Salarios
-    BEGIN
-        DBMS_OUTPUT.PUT_LINE('==== Ejecutando ActualizarSalarios ====');
-        ActualizarSalarios(100); -- Incremento de 100
-        DBMS_OUTPUT.PUT_LINE('Salarios actualizados correctamente.');
-    EXCEPTION
-        WHEN OTHERS THEN
-            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
-            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
-            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+-- Actualizar Salarios
+BEGIN
+DBMS_OUTPUT.PUT_LINE('==== Ejecutando ActualizarSalarios ====');
+ActualizarSalarios(100); -- Incremento de 100
+DBMS_OUTPUT.PUT_LINE('Salarios actualizados correctamente.');
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
    END;
 
-    -- Actualizar Abono Ilimitado
-    BEGIN
-        DBMS_OUTPUT.NEW_LINE;
-        DBMS_OUTPUT.PUT_LINE('==== Ejecutando RenovarAbonoIlimitado ====');
-        RenovarAbonoIlimitado(5, TO_DATE('31/12/2030', 'DD/MM/YYYY')); -- Nueva fecha de caducidad
-    EXCEPTION
-        WHEN OTHERS THEN
-            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
-            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
-            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+-- Actualizar Abono Ilimitado
+BEGIN
+DBMS_OUTPUT.NEW_LINE;
+DBMS_OUTPUT.PUT_LINE('==== Ejecutando RenovarAbonoIlimitado ====');
+RenovarAbonoIlimitado(5, TO_DATE('31/12/2030', 'DD/MM/YYYY')); -- Nueva fecha de caducidad
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
     END;
 
-    -- Comprobar si una persona es empleado
-    BEGIN
-        DBMS_OUTPUT.NEW_LINE;
-        DBMS_OUTPUT.PUT_LINE('==== Ejecutando EsEmpleado ====');
-        esEmpleado('46813937H');
-    EXCEPTION
-        WHEN OTHERS THEN
-            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
-            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
-            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+-- Comprobar si una persona es empleado
+BEGIN
+DBMS_OUTPUT.NEW_LINE;
+DBMS_OUTPUT.PUT_LINE('==== Ejecutando EsEmpleado ====');
+esEmpleado('46813937H');
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
     END;
 
-    -- Obtener conductores con minimo de viajes
-    BEGIN
-        DBMS_OUTPUT.NEW_LINE;
-        DBMS_OUTPUT.PUT_LINE('==== Ejecutando ObtenerConductoresMasViajes ====');
-        obtenerConductoresMasViajes(0);
-    EXCEPTION
-        WHEN OTHERS THEN
-            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
-            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
-            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+-- Obtener conductores con minimo de viajes
+BEGIN
+DBMS_OUTPUT.NEW_LINE;
+DBMS_OUTPUT.PUT_LINE('==== Ejecutando ObtenerConductoresMasViajes ====');
+obtenerConductoresMasViajes(0);
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
     END;
 
-    -- Total de abonos vendidos
-    BEGIN
-        DBMS_OUTPUT.NEW_LINE;
-        DBMS_OUTPUT.PUT_LINE('==== Ejecutando TotalAbonosVendidos ====');
-        totalAbonos := TotalAbonosVendidos; -- Asignar el valor retornado
-        DBMS_OUTPUT.PUT_LINE('Total de abonos vendidos: ' || totalAbonos);
-    EXCEPTION
-        WHEN OTHERS THEN
-            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
-            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
-            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+-- Total de abonos vendidos
+BEGIN
+DBMS_OUTPUT.NEW_LINE;
+DBMS_OUTPUT.PUT_LINE('==== Ejecutando TotalAbonosVendidos ====');
+totalAbonos := TotalAbonosVendidos; -- Asignar el valor retornado
+DBMS_OUTPUT.PUT_LINE('Total de abonos vendidos: ' || totalAbonos);
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
     END;
 
-    -- Detalles de la  línea de un bus urbano
-    BEGIN
-        DBMS_OUTPUT.NEW_LINE;
-        DBMS_OUTPUT.PUT_LINE('==== Ejecutando DetallesLineaAutobusUrbano ====');
-        lineaDetalles := DetallesLineaAutobusUrbano(2); -- Línea 1
-        DBMS_OUTPUT.PUT_LINE(lineaDetalles);
-    EXCEPTION
-        WHEN OTHERS THEN
-            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
-            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
-            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+-- Detalles de la  línea de un bus urbano
+BEGIN
+DBMS_OUTPUT.NEW_LINE;
+DBMS_OUTPUT.PUT_LINE('==== Ejecutando DetallesLineaAutobusUrbano ====');
+lineaDetalles := DetallesLineaAutobusUrbano(2); -- Línea 1
+DBMS_OUTPUT.PUT_LINE(lineaDetalles);
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
     END;
 
 END;
@@ -1123,8 +1124,8 @@ CREATE OR REPLACE TRIGGER validaContratoIndefinido
 BEFORE INSERT OR UPDATE ON CONTRATO
 FOR EACH ROW
 BEGIN
-    IF :NEW.tipo = 'INDEFINIDO' AND :NEW.fecha_fin IS NOT NULL THEN
-        RAISE_APPLICATION_ERROR(-20002, 'Un contrato INDEFINIDO no puede tener una fecha de fin.');
+IF :NEW.tipo = 'INDEFINIDO' AND :NEW.fecha_fin IS NOT NULL THEN
+RAISE_APPLICATION_ERROR(-20002, 'Un contrato INDEFINIDO no puede tener una fecha de fin.');
     END IF;
 END;
 /
@@ -1135,76 +1136,120 @@ END;
 -- En caso de que querer insertar una parada que tiene de orden '3',
 -- comprobar que existen las paradas con orden '1' y '2' en la misma línea
 CREATE OR REPLACE TRIGGER validaOrdenParadas
-BEFORE INSERT OR UPDATE ON LINEAS_PARADAS
-FOR EACH ROW
-DECLARE
-    falta_orden EXCEPTION;
-    cnt NUMBER;
-    falta_parada NUMBER;
+FOR INSERT OR UPDATE
+ON LINEAS_PARADAS
+COMPOUND TRIGGER
+TYPE lineas_paradas_t IS TABLE OF LINEAS_PARADAS%ROWTYPE;
+lineas lineas_paradas_t;
+
+BEFORE STATEMENT IS
 BEGIN
-    -- Comprobar que si se inserta una parada con un orden mayor que 1,
-    IF :NEW.orden > 1 THEN
-        -- Todas las paradas anteriores existen en la misma línea.
-        FOR i IN 1 .. :NEW.orden - 1 LOOP
-            SELECT COUNT(*) INTO cnt
-            FROM LINEAS_PARADAS
-            WHERE linea = :NEW.linea AND orden = i;
+SELECT *
+    BULK COLLECT INTO lineas
+FROM LINEAS_PARADAS;
+    END BEFORE STATEMENT;
 
-            IF cnt = 0 THEN
-                falta_parada := i;
-                RAISE falta_orden;
+BEFORE EACH ROW IS
+validacion BOOLEAN := FALSE;
+BEGIN
+DBMS_OUTPUT.PUT_LINE(lineas.COUNT);
+-- Solo verificamos si estamos insertando un orden mayor que 1
+IF :NEW.orden > 1 THEN
+-- Verificamos cada orden anterior para la línea específica
+FOR i IN 1 .. lineas.COUNT LOOP
+IF lineas(i).linea = :NEW.linea AND lineas(i).orden = :NEW.orden - 1 THEN
+validacion := TRUE;
+END IF;
+            END LOOP;
+IF NOT validacion THEN
+RAISE_APPLICATION_ERROR(
+-20001,
+'No existen todas las paradas anteriores en la línea ' || :NEW.linea ||
+' para el orden especificado: ' || :NEW.orden || 
+CHR(10) || 'Falta la parada con orden: ' || (:NEW.orden - 1)
+);
             END IF;
-        END LOOP;
-    END IF;
-
-EXCEPTION
-    WHEN falta_orden THEN
-        RAISE_APPLICATION_ERROR(
-            -20001, 'No existen todas las paradas anteriores en la línea para el orden especificado: ' || :NEW.orden 
-            || CHR(10) || 'Falta la parada con orden: ' || falta_parada);
-END;
+        END IF;
+    END BEFORE EACH ROW;
+END validaOrdenParadas;
 /
 
+CREATE OR REPLACE TRIGGER comprobarAforoLleno
+FOR INSERT OR UPDATE ON BILLETE
+COMPOUND TRIGGER
+TYPE billete_tab IS TABLE OF BILLETE%ROWTYPE;
+billetes billete_tab;
 
--- Debería dar error: no existe la parada con orden '4' en la línea '1' parada '3'
--- INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '4', '5');
+BEFORE STATEMENT IS
+BEGIN
+    SELECT *
+        BULK COLLECT INTO billetes
+    FROM BILLETE;
+END BEFORE STATEMENT;
+
+BEFORE EACH ROW IS
+num_billetes NUMBER := 0;
+aforo_autobus NUMBER;
+
+BEGIN
+    FOR i IN 1..billetes.COUNT LOOP
+    IF billetes(i).viaje = :NEW.viaje THEN 
+    num_billetes := num_billetes + 1;
+END IF;
+END LOOP;
+
+
+--Obtener capacidad del autobus interurbano
+SELECT ai.num_plazas
+    INTO aforo_autobus
+FROM AUTOBUS_INTERURBANO ai
+JOIN VIAJE v ON ai.matricula = v.autobus
+WHERE v.id_viaje = :NEW.viaje;
+
+--Comprobar si se supera la capacidad del autobus
+IF num_billetes >= aforo_autobus THEN
+RAISE_APPLICATION_ERROR(-20001, 'No se puede emitir el billete: el aforo del autobus esta completo');
+        END IF;
+    END BEFORE EACH ROW;
+END;
+/
 
 /*bloque de prueba para el trigger validaContratoIndefinido*/
 BEGIN
-   DBMS_OUTPUT.NEW_LINE;
+    DBMS_OUTPUT.NEW_LINE;
 
-   DBMS_OUTPUT.PUT_LINE('TEST TRIGGER INSERT CORRECTO validaContratoIndefinido');
-   INSERT INTO CONTRATO (id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('4', 'INDEFINIDO', TO_DATE('23/11/2021', 'DD/MM/YYYY'), NULL, '25', '850');
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER INSERT CORRECTO validaContratoIndefinido');
+    INSERT INTO CONTRATO (id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('4', 'INDEFINIDO', TO_DATE('23/11/2021', 'DD/MM/YYYY'), NULL, '25', '850');
 
-   DBMS_OUTPUT.PUT_LINE('TEST TRIGGER INSERT ERROR validaContratoIndefinido');
-   INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('5', 'INDEFINIDO', TO_DATE('04/07/2020', 'DD/MM/YYYY'), TO_DATE('24/05/2025', 'DD/MM/YYYY'), '20', '600');
-   -- se produce una excepcion
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER INSERT ERROR validaContratoIndefinido');
+    INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('5', 'INDEFINIDO', TO_DATE('04/07/2020', 'DD/MM/YYYY'), TO_DATE('24/05/2025', 'DD/MM/YYYY'), '20', '600');
+    -- se produce una excepcion
 
-EXCEPTION
+    EXCEPTION
     WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('[EXCEPCION]');
-        DBMS_OUTPUT.PUT_LINE('[Codigo]: ' || SQLCODE || ' [Mensaje]: ' || SQLERRM);
+    DBMS_OUTPUT.PUT_LINE('[EXCEPCION]');
+    DBMS_OUTPUT.PUT_LINE('[Codigo]: ' || SQLCODE || ' [Mensaje]: ' || SUBSTR(SQLERRM, 11, 300));
 
 END;
 /
 
 BEGIN
-   DBMS_OUTPUT.NEW_LINE;
+    DBMS_OUTPUT.NEW_LINE;
 
-   DBMS_OUTPUT.PUT_LINE('TEST TRIGGER UPDATE CORRECTO validaContratoIndefinido');
-   UPDATE CONTRATO
-   SET tipo = 'TEMPORAL', fecha_fin = SYSDATE + 30
-   WHERE id_contrato = 2;
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER UPDATE CORRECTO validaContratoIndefinido');
+    UPDATE CONTRATO
+    SET tipo = 'TEMPORAL', fecha_fin = SYSDATE + 30
+    WHERE id_contrato = 2;
 
-   DBMS_OUTPUT.PUT_LINE('TEST TRIGGER UPDATE ERROR validaContratoIndefinido');
-   UPDATE CONTRATO
-   SET tipo = 'INDEFINIDO', fecha_fin = SYSDATE + 30
-   WHERE id_contrato = 4;
-   
-EXCEPTION
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER UPDATE ERROR validaContratoIndefinido');
+    UPDATE CONTRATO
+    SET tipo = 'INDEFINIDO', fecha_fin = SYSDATE + 30
+    WHERE id_contrato = 4;
+
+    EXCEPTION
     WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('[EXCEPCION]');
-        DBMS_OUTPUT.PUT_LINE('[Codigo]: ' || SQLCODE || ' [Mensaje]: ' || SQLERRM);
+    DBMS_OUTPUT.PUT_LINE('[EXCEPCION]');
+    DBMS_OUTPUT.PUT_LINE('[Codigo]: ' || SQLCODE || ' [Mensaje]: ' || SUBSTR(SQLERRM, 11, 300));
 
 END;
 /
@@ -1228,3 +1273,97 @@ END;
 
 INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('4', TO_DATE('14/03/2025', 'DD/MM/YYYY'),'2','82082351Y','6754BDI');
 DELETE FROM CONDUCTOR WHERE dni = '82082351Y';
+
+/*bloque de prueba para el trigger validaOrdenParadas*/
+BEGIN
+    DBMS_OUTPUT.NEW_LINE;
+
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER INSERT CORRECTO validaOrdenParadas');
+    -- CORRECTO
+    INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('3', '4', '4');
+
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER INSERT ERROR validaOrdenParadas');
+    -- Produce exception: no existe la parada con orden '4' en la línea '1' parada '3'
+    INSERT INTO LINEAS_PARADAS (linea, parada, orden) VALUES ('1', '4', '5');
+
+    EXCEPTION
+    WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('[EXCEPCION]');
+    DBMS_OUTPUT.PUT_LINE('[Codigo]: ' || SQLCODE || ' [Mensaje]: ' || SUBSTR(SQLERRM, 11, 300));
+
+END;
+/
+
+BEGIN
+    DBMS_OUTPUT.NEW_LINE;
+
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER UPDATE CORRECTO validaOrdenParadas');
+    -- CORRECTO
+    -- borramos la parada orden = 3
+    DELETE FROM LINEAS_PARADAS
+    WHERE linea = '3' AND parada = '5';
+    -- actualizamos la parada orden = 4 al orden = 3
+    UPDATE LINEAS_PARADAS
+    SET orden = '3'
+    WHERE linea = '3' AND parada = '4';
+
+
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER UPDATE ERROR validaOrdenParadas');
+    -- ERROR: no existe la parada con orden = 4 en la línea = 1
+    UPDATE LINEAS_PARADAS
+    SET orden = '5'
+    WHERE linea = '1' AND parada = '3';
+
+    EXCEPTION
+    WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('[EXCEPCION]');
+    DBMS_OUTPUT.PUT_LINE('[Codigo]: ' || SQLCODE || ' [Mensaje]: ' || SUBSTR(SQLERRM, 11, 300));
+
+END;
+/
+
+BEGIN
+    DBMS_OUTPUT.NEW_LINE;
+    --Creamos autobus interurbano con aforo pequeño
+    INSERT INTO AUTOBUS(matricula, num_asientos, modelo, fecha_itv, propietario) VALUES ('5656TST', '2', 'Minibus Test', TO_DATE('01/01/2025', 'DD/MM/YYYY'), 'B2322468R');
+    INSERT INTO AUTOBUS_INTERURBANO(matricula, num_plazas) VALUES ('5656TST', '2');
+    --Creamos viaje con ese autobus
+    INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('1000', TO_DATE('01/01/2025', 'DD/MM/YYYY'), '1', '35537699R', '5656TST');
+    --Creamos billetes hasta llenar el aforo
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER INSERT CORRECTO comprobarAforoLleno');
+    INSERT INTO BILLETE(id_billete, viaje) VALUES ('1000', '1000');
+    INSERT INTO BILLETE(id_billete, viaje) VALUES ('1001', '1000');
+
+    --Intentamos crear un billete cuando el aforo esta completo
+
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER INSERT ERROR comprobarAforoLleno');
+    INSERT INTO BILLETE(id_billete, viaje) VALUES ('1002', '1000');
+
+    EXCEPTION
+    WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('[EXCEPCION]');
+    DBMS_OUTPUT.PUT_LINE('[Codigo]: ' || SQLCODE);
+    DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SUBSTR(SQLERRM, 11, 300));
+END;
+/
+
+BEGIN
+    DBMS_OUTPUT.NEW_LINE;
+
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER UPDATE CORRECTO comprobarAforoLleno');
+    UPDATE BILLETE
+    SET viaje = '3'
+    WHERE id_billete = '5';
+
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER UPDATE ERROR comprobarAforoLleno');
+    UPDATE BILLETE
+    SET viaje = '1000'
+    WHERE id_billete = '5';
+
+    EXCEPTION
+    WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('[EXCEPCION]');
+    DBMS_OUTPUT.PUT_LINE('[Codigo]: ' || SQLCODE);
+    DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SUBSTR(SQLERRM, 11, 300));
+END;
+/
