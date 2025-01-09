@@ -1036,85 +1036,85 @@ SHOW ERRORS;
 /********************************************************/
 
 DECLARE
-totalAbonos NUMBER;
-lineaDetalles VARCHAR2(4000);
+    totalAbonos NUMBER;
+    lineaDetalles VARCHAR2(4000);
 BEGIN
-DBMS_OUTPUT.NEW_LINE;
-DBMS_OUTPUT.PUT_LINE('==== Pruebas de Procedimientos y Funciones ====');
-DBMS_OUTPUT.NEW_LINE;
+    DBMS_OUTPUT.NEW_LINE;
+    DBMS_OUTPUT.PUT_LINE('==== Pruebas de Procedimientos y Funciones ====');
+    DBMS_OUTPUT.NEW_LINE;
 
--- Actualizar Salarios
-BEGIN
-DBMS_OUTPUT.PUT_LINE('==== Ejecutando ActualizarSalarios ====');
-ActualizarSalarios(100); -- Incremento de 100
-DBMS_OUTPUT.PUT_LINE('Salarios actualizados correctamente.');
-EXCEPTION
-WHEN OTHERS THEN
-DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
-DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
-DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+    -- Actualizar Salarios
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('==== Ejecutando ActualizarSalarios ====');
+        ActualizarSalarios(100); -- Incremento de 100
+        DBMS_OUTPUT.PUT_LINE('Salarios actualizados correctamente.');
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
    END;
 
--- Actualizar Abono Ilimitado
-BEGIN
-DBMS_OUTPUT.NEW_LINE;
-DBMS_OUTPUT.PUT_LINE('==== Ejecutando RenovarAbonoIlimitado ====');
-RenovarAbonoIlimitado(5, TO_DATE('31/12/2030', 'DD/MM/YYYY')); -- Nueva fecha de caducidad
-EXCEPTION
-WHEN OTHERS THEN
-DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
-DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
-DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+    -- Actualizar Abono Ilimitado
+    BEGIN
+        DBMS_OUTPUT.NEW_LINE;
+        DBMS_OUTPUT.PUT_LINE('==== Ejecutando RenovarAbonoIlimitado ====');
+        RenovarAbonoIlimitado(5, TO_DATE('31/12/2030', 'DD/MM/YYYY')); -- Nueva fecha de caducidad
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
     END;
 
--- Comprobar si una persona es empleado
-BEGIN
-DBMS_OUTPUT.NEW_LINE;
-DBMS_OUTPUT.PUT_LINE('==== Ejecutando EsEmpleado ====');
-esEmpleado('46813937H');
-EXCEPTION
-WHEN OTHERS THEN
-DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
-DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
-DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+    -- Comprobar si una persona es empleado
+    BEGIN
+        DBMS_OUTPUT.NEW_LINE;
+        DBMS_OUTPUT.PUT_LINE('==== Ejecutando EsEmpleado ====');
+        esEmpleado('46813937H');
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
     END;
 
--- Obtener conductores con minimo de viajes
-BEGIN
-DBMS_OUTPUT.NEW_LINE;
-DBMS_OUTPUT.PUT_LINE('==== Ejecutando ObtenerConductoresMasViajes ====');
-obtenerConductoresMasViajes(0);
-EXCEPTION
-WHEN OTHERS THEN
-DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
-DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
-DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+    -- Obtener conductores con minimo de viajes
+    BEGIN
+        DBMS_OUTPUT.NEW_LINE;
+        DBMS_OUTPUT.PUT_LINE('==== Ejecutando ObtenerConductoresMasViajes ====');
+        obtenerConductoresMasViajes(0);
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
     END;
 
--- Total de abonos vendidos
-BEGIN
-DBMS_OUTPUT.NEW_LINE;
-DBMS_OUTPUT.PUT_LINE('==== Ejecutando TotalAbonosVendidos ====');
-totalAbonos := TotalAbonosVendidos; -- Asignar el valor retornado
-DBMS_OUTPUT.PUT_LINE('Total de abonos vendidos: ' || totalAbonos);
-EXCEPTION
-WHEN OTHERS THEN
-DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
-DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
-DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+    -- Total de abonos vendidos
+    BEGIN
+        DBMS_OUTPUT.NEW_LINE;
+        DBMS_OUTPUT.PUT_LINE('==== Ejecutando TotalAbonosVendidos ====');
+        totalAbonos := TotalAbonosVendidos; -- Asignar el valor retornado
+        DBMS_OUTPUT.PUT_LINE('Total de abonos vendidos: ' || totalAbonos);
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
     END;
 
--- Detalles de la  línea de un bus urbano
-BEGIN
-DBMS_OUTPUT.NEW_LINE;
-DBMS_OUTPUT.PUT_LINE('==== Ejecutando DetallesLineaAutobusUrbano ====');
-lineaDetalles := DetallesLineaAutobusUrbano(2); -- Línea 1
-DBMS_OUTPUT.PUT_LINE(lineaDetalles);
-EXCEPTION
-WHEN OTHERS THEN
-DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
-DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
-DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
+    -- Detalles de la  línea de un bus urbano
+    BEGIN
+        DBMS_OUTPUT.NEW_LINE;
+        DBMS_OUTPUT.PUT_LINE('==== Ejecutando DetallesLineaAutobusUrbano ====');
+        lineaDetalles := DetallesLineaAutobusUrbano(2); -- Línea 1
+        DBMS_OUTPUT.PUT_LINE(lineaDetalles);
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('[EXCEPTION]');
+            DBMS_OUTPUT.PUT_LINE('[CODE]: ' || SQLCODE);
+            DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SQLERRM);
     END;
 
 END;
@@ -1124,13 +1124,12 @@ CREATE OR REPLACE TRIGGER validaContratoIndefinido
 BEFORE INSERT OR UPDATE ON CONTRATO
 FOR EACH ROW
 BEGIN
-IF :NEW.tipo = 'INDEFINIDO' AND :NEW.fecha_fin IS NOT NULL THEN
-RAISE_APPLICATION_ERROR(-20002, 'Un contrato INDEFINIDO no puede tener una fecha de fin.');
+    IF :NEW.tipo = 'INDEFINIDO' AND :NEW.fecha_fin IS NOT NULL THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Un contrato INDEFINIDO no puede tener una fecha de fin.');
     END IF;
 END;
 /
 
--- INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('1', 'INDEFINIDO', TO_DATE('14/03/1992', 'DD/MM/YYYY'), TO_DATE('14/03/1998', 'DD/MM/YYYY'), '40', '1350');
 
 -- Trigger para validar la inserción de una parada en una línea
 -- En caso de que querer insertar una parada que tiene de orden '3',
@@ -1139,35 +1138,35 @@ CREATE OR REPLACE TRIGGER validaOrdenParadas
 FOR INSERT OR UPDATE
 ON LINEAS_PARADAS
 COMPOUND TRIGGER
-TYPE lineas_paradas_t IS TABLE OF LINEAS_PARADAS%ROWTYPE;
-lineas lineas_paradas_t;
+    TYPE lineas_paradas_t IS TABLE OF LINEAS_PARADAS%ROWTYPE;
+    lineas lineas_paradas_t;
 
-BEFORE STATEMENT IS
-BEGIN
-SELECT *
-    BULK COLLECT INTO lineas
-FROM LINEAS_PARADAS;
+    BEFORE STATEMENT IS
+    BEGIN
+        SELECT *
+        BULK COLLECT INTO lineas
+        FROM LINEAS_PARADAS;
     END BEFORE STATEMENT;
 
-BEFORE EACH ROW IS
-validacion BOOLEAN := FALSE;
-BEGIN
-DBMS_OUTPUT.PUT_LINE(lineas.COUNT);
--- Solo verificamos si estamos insertando un orden mayor que 1
-IF :NEW.orden > 1 THEN
--- Verificamos cada orden anterior para la línea específica
-FOR i IN 1 .. lineas.COUNT LOOP
-IF lineas(i).linea = :NEW.linea AND lineas(i).orden = :NEW.orden - 1 THEN
-validacion := TRUE;
-END IF;
+    BEFORE EACH ROW IS
+        validacion BOOLEAN := FALSE;
+        BEGIN
+        DBMS_OUTPUT.PUT_LINE(lineas.COUNT);
+        -- Solo verificamos si estamos insertando un orden mayor que 1
+        IF :NEW.orden > 1 THEN
+            -- Verificamos cada orden anterior para la línea específica
+            FOR i IN 1 .. lineas.COUNT LOOP
+                IF lineas(i).linea = :NEW.linea AND lineas(i).orden = :NEW.orden - 1 THEN
+                validacion := TRUE;
+                END IF;
             END LOOP;
-IF NOT validacion THEN
-RAISE_APPLICATION_ERROR(
--20001,
-'No existen todas las paradas anteriores en la línea ' || :NEW.linea ||
-' para el orden especificado: ' || :NEW.orden || 
-CHR(10) || 'Falta la parada con orden: ' || (:NEW.orden - 1)
-);
+            IF NOT validacion THEN
+            RAISE_APPLICATION_ERROR(
+            -20001,
+            'No existen todas las paradas anteriores en la línea ' || :NEW.linea ||
+            ' para el orden especificado: ' || :NEW.orden || 
+            CHR(10) || 'Falta la parada con orden: ' || (:NEW.orden - 1)
+            );
             END IF;
         END IF;
     END BEFORE EACH ROW;
@@ -1177,39 +1176,39 @@ END validaOrdenParadas;
 CREATE OR REPLACE TRIGGER comprobarAforoLleno
 FOR INSERT OR UPDATE ON BILLETE
 COMPOUND TRIGGER
-TYPE billete_tab IS TABLE OF BILLETE%ROWTYPE;
-billetes billete_tab;
+    TYPE billete_tab IS TABLE OF BILLETE%ROWTYPE;
+    billetes billete_tab;
 
-BEFORE STATEMENT IS
-BEGIN
-    SELECT *
-        BULK COLLECT INTO billetes
-    FROM BILLETE;
-END BEFORE STATEMENT;
+    BEFORE STATEMENT IS
+    BEGIN
+        SELECT *
+            BULK COLLECT INTO billetes
+        FROM BILLETE;
+    END BEFORE STATEMENT;
 
-BEFORE EACH ROW IS
-num_billetes NUMBER := 0;
-aforo_autobus NUMBER;
+    BEFORE EACH ROW IS
+        num_billetes NUMBER := 0;
+        aforo_autobus NUMBER;
 
-BEGIN
-    FOR i IN 1..billetes.COUNT LOOP
-    IF billetes(i).viaje = :NEW.viaje THEN 
-    num_billetes := num_billetes + 1;
-END IF;
-END LOOP;
+        BEGIN
+            FOR i IN 1..billetes.COUNT LOOP
+                IF billetes(i).viaje = :NEW.viaje THEN 
+                    num_billetes := num_billetes + 1;
+                END IF;
+            END LOOP;
 
 
---Obtener capacidad del autobus interurbano
-SELECT ai.num_plazas
-    INTO aforo_autobus
-FROM AUTOBUS_INTERURBANO ai
-JOIN VIAJE v ON ai.matricula = v.autobus
-WHERE v.id_viaje = :NEW.viaje;
+            --Obtener capacidad del autobus interurbano
+            SELECT ai.num_plazas
+                INTO aforo_autobus
+            FROM AUTOBUS_INTERURBANO ai
+            JOIN VIAJE v ON ai.matricula = v.autobus
+            WHERE v.id_viaje = :NEW.viaje;
 
---Comprobar si se supera la capacidad del autobus
-IF num_billetes >= aforo_autobus THEN
-RAISE_APPLICATION_ERROR(-20001, 'No se puede emitir el billete: el aforo del autobus esta completo');
-        END IF;
+            --Comprobar si se supera la capacidad del autobus
+            IF num_billetes >= aforo_autobus THEN
+                RAISE_APPLICATION_ERROR(-20001, 'No se puede emitir el billete: el aforo del autobus esta completo');
+            END IF;
     END BEFORE EACH ROW;
 END;
 /
@@ -1219,7 +1218,7 @@ BEGIN
     DBMS_OUTPUT.NEW_LINE;
 
     DBMS_OUTPUT.PUT_LINE('TEST TRIGGER INSERT CORRECTO validaContratoIndefinido');
-    INSERT INTO CONTRATO (id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('4', 'INDEFINIDO', TO_DATE('23/11/2021', 'DD/MM/YYYY'), NULL, '25', '850');
+    INSERT INTO CONTRATO (id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('7', 'INDEFINIDO', TO_DATE('23/11/2021', 'DD/MM/YYYY'), NULL, '25', '850');
 
     DBMS_OUTPUT.PUT_LINE('TEST TRIGGER INSERT ERROR validaContratoIndefinido');
     INSERT INTO CONTRATO(id_contrato, tipo, fecha_inicio, fecha_fin, horas_semana, salario) VALUES ('5', 'INDEFINIDO', TO_DATE('04/07/2020', 'DD/MM/YYYY'), TO_DATE('24/05/2025', 'DD/MM/YYYY'), '20', '600');
@@ -1254,25 +1253,36 @@ BEGIN
 END;
 /
 
+
 CREATE OR REPLACE TRIGGER validaFuturosViajesConductor
-BEFORE DELETE ON CONDUCTOR
-FOR EACH ROW
-DECLARE
-    v_count NUMBER;
-BEGIN
-    SELECT COUNT(*)
-    INTO v_count
-    FROM VIAJE
-    WHERE conductor = :OLD.dni AND fecha > SYSDATE;
-    
-    IF v_count > 0 THEN
-        RAISE_APPLICATION_ERROR(-20001, 'No se puede eliminar el conductor porque tiene viajes futuros asignados.');
-    END IF;
+FOR DELETE ON CONDUCTOR
+COMPOUND TRIGGER
+    TYPE viajes_t IS TABLE OF VIAJE%ROWTYPE;
+    viajes viajes_t;
+
+    BEFORE STATEMENT IS
+    BEGIN
+        SELECT *
+        BULK COLLECT INTO viajes
+        FROM VIAJE;
+    END BEFORE STATEMENT;
+
+    BEFORE EACH ROW IS
+    v_count NUMBER := 0;
+    BEGIN
+        FOR i IN 1..viajes.COUNT LOOP
+            IF viajes(i).conductor = :OLD.dni AND viajes(i).fecha > SYSDATE THEN
+                v_count := v_count + 1;
+            END IF;
+        END LOOP;
+
+        IF v_count > 0 THEN
+            RAISE_APPLICATION_ERROR(-20001, 'No se puede eliminar el conductor porque tiene viajes futuros asignados.');
+        END IF;
+    END BEFORE EACH ROW;
 END;
 /
 
-INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('4', TO_DATE('14/03/2025', 'DD/MM/YYYY'),'2','82082351Y','6754BDI');
-DELETE FROM CONDUCTOR WHERE dni = '82082351Y';
 
 /*bloque de prueba para el trigger validaOrdenParadas*/
 BEGIN
@@ -1351,14 +1361,37 @@ BEGIN
     DBMS_OUTPUT.NEW_LINE;
 
     DBMS_OUTPUT.PUT_LINE('TEST TRIGGER UPDATE CORRECTO comprobarAforoLleno');
+    -- CORRECTO: actualizamos un billete
     UPDATE BILLETE
     SET viaje = '3'
     WHERE id_billete = '5';
 
     DBMS_OUTPUT.PUT_LINE('TEST TRIGGER UPDATE ERROR comprobarAforoLleno');
+    -- ERROR: el aforo esta completo
     UPDATE BILLETE
     SET viaje = '1000'
     WHERE id_billete = '5';
+
+    EXCEPTION
+    WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('[EXCEPCION]');
+    DBMS_OUTPUT.PUT_LINE('[Codigo]: ' || SQLCODE);
+    DBMS_OUTPUT.PUT_LINE('[MESSAGE]: ' || SUBSTR(SQLERRM, 11, 300));
+END;
+/
+
+BEGIN
+    DBMS_OUTPUT.NEW_LINE;
+
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER DELETE CORRECTO validaFuturosViajesConductor');
+    -- CORRECTO: el conductor no tiene viajes futuros
+    DELETE FROM CONDUCTOR WHERE dni = '35537699R';
+
+    DBMS_OUTPUT.PUT_LINE('TEST TRIGGER DELETE ERROR validaFuturosViajesConductor');
+    -- Insertamos un conductor con viajes futuros
+    INSERT INTO VIAJE(id_viaje, fecha, ruta, conductor, autobus) VALUES ('4', TO_DATE('14/03/2025', 'DD/MM/YYYY'),'2','82082351Y','6754BDI');
+    -- ERROR: el conductor tiene viajes futuros
+    DELETE FROM CONDUCTOR WHERE dni = '82082351Y';
 
     EXCEPTION
     WHEN OTHERS THEN
